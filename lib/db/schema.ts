@@ -1,0 +1,122 @@
+import { pgTable, text, uuid, timestamp, decimal, integer, boolean, jsonb, pgEnum, index } from 'drizzle-orm/pg-core'
+
+export const tenderStatusEnum = pgEnum('tender_status', ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost', 'withdrawn'])
+export const goNoGoEnum = pgEnum('go_no_go', ['pending', 'go', 'no_go'])
+export const documentTypeEnum = pgEnum('document_type', ['aankondiging', 'bestek', 'leidraad', 'tekening', 'nota_van_inlichtingen', 'eigen_upload', 'concept_aanbieding', 'definitief'])
+export const analysisStatusEnum = pgEnum('analysis_status', ['pending', 'processing', 'done', 'failed'])
+export const questionPriorityEnum = pgEnum('question_priority', ['critical', 'high', 'medium', 'low'])
+export const questionStatusEnum = pgEnum('question_status', ['draft', 'approved', 'submitted', 'answered'])
+export const sectionTypeEnum = pgEnum('section_type', ['plan_van_aanpak', 'kwaliteit', 'prijs_onderbouwing', 'team_cv', 'referenties', 'vca_veiligheid', 'eigen_sectie'])
+export const sectionStatusEnum = pgEnum('section_status', ['empty', 'draft', 'in_review', 'approved'])
+export const noteTypeEnum = pgEnum('note_type', ['internal', 'decision', 'risk', 'milestone'])
+export const userRoleEnum = pgEnum('user_role', ['admin', 'tender_manager', 'team_member'])
+
+export const users = pgTable('users', {
+  id: text('id').primaryKey(),
+  name: text('name'),
+  email: text('email'),
+  avatarUrl: text('avatar_url'),
+  role: userRoleEnum('role').default('team_member'),
+  createdAt: timestamp('created_at').defaultNow(),
+})
+
+export const tenders = pgTable('tenders', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  referenceNumber: text('reference_number'),
+  contractingAuthority: text('contracting_authority'),
+  publicationDate: timestamp('publication_date'),
+  deadlineQuestions: timestamp('deadline_questions'),
+  deadlineSubmission: timestamp('deadline_submission'),
+  estimatedValue: decimal('estimated_value', { precision: 12, scale: 2 }),
+  cpvCodes: text('cpv_codes').array(),
+  procedureType: text('procedure_type'),
+  status: tenderStatusEnum('status').default('new'),
+  goNoGo: goNoGoEnum('go_no_go').default('pending'),
+  winProbability: integer('win_probability').default(0),
+  tenderManagerId: text('tender_manager_id'),
+  teamMemberIds: text('team_member_ids').array().default([]),
+  tendernetUrl: text('tendernet_url'),
+  tendernedPublicatieId: text('tenderned_publicatie_id'),
+  goNoGoReasoning: text('go_no_go_reasoning'),
+  notesCount: integer('notes_count').default(0),
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
+}, (table) => ({
+  statusIdx: index('tenders_status_idx').on(table.status),
+  managerIdx: index('tenders_manager_idx').on(table.tenderManagerId),
+}))
+
+export const tenderDocuments = pgTable('tender_documents', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenderId: uuid('tender_id').references(() => tenders.id, { onDelete: 'cascade' }),
+  fileName: text('file_name'),
+  fileUrl: text('file_url'),
+  fileSize: integer('file_size'),
+  documentType: documentTypeEnum('document_type').default('eigen_upload'),
+  analysisStatus: analysisStatusEnum('analysis_status').default('pending'),
+  analysisSummary: text('analysis_summary'),
+  analysisJson: jsonb('analysis_json'),
+  uploadedBy: text('uploaded_by'),
+  uploadedAt: timestamp('uploaded_at').defaultNow(),
+  tendernedContentId: text('tenderned_content_id'),
+}, (table) => ({
+  tenderIdx: index('documents_tender_idx').on(table.tenderId),
+}))
+
+export const tenderQuestions = pgTable('tender_questions', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenderId: uuid('tender_id').references(() => tenders.id, { onDelete: 'cascade' }),
+  questionText: text('question_text'),
+  rationale: text('rationale'),
+  category: text('category'),
+  priority: questionPriorityEnum('priority').default('medium'),
+  status: questionStatusEnum('status').default('draft'),
+  answerText: text('answer_text'),
+  aiGenerated: boolean('ai_generated').default(false),
+  submittedAt: timestamp('submitted_at'),
+  answeredAt: timestamp('answered_at'),
+  createdBy: text('created_by'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  tenderIdx: index('questions_tender_idx').on(table.tenderId),
+}))
+
+export const tenderSections = pgTable('tender_sections', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenderId: uuid('tender_id').references(() => tenders.id, { onDelete: 'cascade' }),
+  sectionType: sectionTypeEnum('section_type').default('eigen_sectie'),
+  title: text('title'),
+  content: text('content').default(''),
+  aiGenerated: boolean('ai_generated').default(false),
+  wordCount: integer('word_count').default(0),
+  status: sectionStatusEnum('status').default('empty'),
+  orderIndex: integer('order_index').default(0),
+  lastEditedBy: text('last_edited_by'),
+  lastEditedAt: timestamp('last_edited_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  tenderIdx: index('sections_tender_idx').on(table.tenderId),
+}))
+
+export const tenderActivities = pgTable('tender_activities', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenderId: uuid('tender_id').references(() => tenders.id, { onDelete: 'cascade' }),
+  userId: text('user_id'),
+  activityType: text('activity_type'),
+  description: text('description'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').defaultNow(),
+}, (table) => ({
+  tenderIdx: index('activities_tender_idx').on(table.tenderId),
+  createdIdx: index('activities_created_idx').on(table.createdAt),
+}))
+
+export const tenderNotes = pgTable('tender_notes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  tenderId: uuid('tender_id').references(() => tenders.id, { onDelete: 'cascade' }),
+  authorId: text('author_id'),
+  content: text('content'),
+  noteType: noteTypeEnum('note_type').default('internal'),
+  createdAt: timestamp('created_at').defaultNow(),
+})

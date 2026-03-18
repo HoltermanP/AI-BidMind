@@ -1,26 +1,717 @@
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Van Gelder huisstijl (vangelder.com): donkergrijs, rood, goudgeel */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --navy: #58595b;
+  --navy-light: #6d6e70;
+  --navy-mid: #808184;
+  --amber: #e31e24;
+  --amber-light: #ea4b50;
+  --amber-muted: #fde8e9;
+  --slate-blue: #ffc600;
+  --slate-blue-light: #fff4cc;
+  --off-white: #f8fafc;
+  --border: #e2e8f0;
+  --muted: #64748b;
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --success: #059669;
+  --success-bg: #ecfdf5;
+  --error: #dc2626;
+  --error-bg: #fef2f2;
+  --warning: #d97706;
+  --warning-bg: #fffbeb;
+  --sidebar-text: #94a3b8;
+  --sidebar-text-hover: #e8e8e8;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: 14px;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  background: var(--off-white);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+code, .mono {
+  font-family: 'IBM Plex Mono', monospace;
+}
+
+a {
+  color: var(--slate-blue);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+input, textarea, select {
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--border) 25%, var(--off-white) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+
+/* Utility classes */
+.font-syne { font-family: 'Syne', sans-serif; }
+.font-plex { font-family: 'IBM Plex Sans', sans-serif; }
+.font-mono { font-family: 'IBM Plex Mono', monospace; }
+
+/* ——— Dashboard ——— */
+.dashboard-page {
+  padding: 24px 32px 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  margin-bottom: 20px;
+}
+
+.dashboard-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 2px;
+}
+
+.dashboard-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.8125rem;
+}
+
+/* Pipeline sectie — kaarten met pijlen + samenvattende stats */
+.dashboard-pipeline-section {
+  background: linear-gradient(145deg, #ffffff 0%, var(--off-white) 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px 28px 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+/* Pipeline dark theme (Tender pipeline + AI agents) */
+.dashboard-pipeline-dark {
+  background: linear-gradient(160deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+  overflow-y: visible;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-title {
+  color: #f8fafc;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-subtitle {
+  color: #94a3b8;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-link {
+  color: #7dd3fc;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-link:hover {
+  color: #bae6fd;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-divider {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.1) 10%, rgba(255, 255, 255, 0.1) 90%, transparent 100%);
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stat-value {
+  color: #f8fafc;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stat-label {
+  color: #94a3b8;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stat-warning {
+  color: #fcd34d;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stat-success {
+  color: #6ee7b7;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stat-error {
+  color: #f87171;
+}
+
+/* Grid: 15 kolommen (8 stage + 7 pijlen), 2 rijen (stages+arrows, agents) */
+.dashboard-pipeline-grid {
+  display: grid;
+  grid-template-columns: minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr);
+  grid-template-rows: auto auto;
+  gap: 0 0;
+  row-gap: 16px;
+  align-items: stretch;
+  min-height: 96px;
+  overflow-x: auto;
+  overflow-y: visible;
+}
+
+.dashboard-pipeline-grid .dashboard-pipeline-stage {
+  grid-row: 1;
+  min-height: 72px;
+}
+
+.dashboard-pipeline-grid .dashboard-pipeline-arrow {
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.dashboard-pipeline-grid .dashboard-pipeline-agent {
+  grid-row: 2;
+}
+
+.dashboard-pipeline-dark .dashboard-pipeline-stage:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.dashboard-pipeline-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.dashboard-pipeline-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+
+.dashboard-pipeline-subtitle {
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.dashboard-pipeline-link {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--slate-blue);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.dashboard-pipeline-link:hover {
+  color: var(--navy-light);
+  text-decoration: underline;
+}
+
+.dashboard-pipeline-track {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  min-height: 96px;
+  overflow-x: auto;
+}
+
+.dashboard-pipeline-arrow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: stretch;
+  color: var(--text-secondary);
+  opacity: 0.85;
+}
+
+.dashboard-pipeline-arrow svg {
+  display: block;
+}
+
+.dashboard-pipeline-stage {
+  flex: 1;
+  min-width: 76px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--text-primary);
+  background: var(--stage-bg, #F3F4F6);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.15s;
+}
+
+.dashboard-pipeline-stage:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-pipeline-count {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.625rem;
+  font-weight: 700;
+  color: var(--stage-accent, var(--navy));
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-pipeline-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--stage-accent, var(--text-secondary));
+  text-align: center;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.dashboard-pipeline-pct {
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* AI Agent cards onder de pipeline */
+.dashboard-pipeline-agent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 12px 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  min-height: 88px;
+}
+
+.dashboard-pipeline-agent-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f172a;
+  flex-shrink: 0;
+}
+
+.dashboard-pipeline-agent-name {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.dashboard-pipeline-agent-pct {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #f8fafc;
+  font-family: 'Syne', sans-serif;
+}
+
+/* Agent card met hover-tooltip (opmerkingen wolkje) */
+.dashboard-pipeline-agent-with-tooltip {
+  position: relative;
+  cursor: help;
+}
+
+.dashboard-pipeline-agent-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  padding: 12px 8px;
+}
+
+.dashboard-pipeline-agent-with-tooltip .dashboard-pipeline-agent-icon,
+.dashboard-pipeline-agent-with-tooltip .dashboard-pipeline-agent-name,
+.dashboard-pipeline-agent-with-tooltip .dashboard-pipeline-agent-pct {
+  position: relative;
+  z-index: 0;
+}
+
+.dashboard-pipeline-agent-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  transform: translateX(-50%) translateY(-8px);
+  max-width: min(320px, calc(100vw - 32px));
+  padding: 12px 14px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: clamp(0.6875rem, 1.8vw, 0.75rem);
+  line-height: 1.45;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease 0s, visibility 0.2s ease 0s, transform 0.2s ease 0s;
+  z-index: 20;
+  pointer-events: none;
+  text-align: left;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: normal;
+}
+
+/* Pijltje van wolkje naar agent card */
+.dashboard-pipeline-agent-tooltip::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #1e293b;
+}
+
+/* Langer wachten tot tooltip verschijnt (ca. 0,6 s) */
+.dashboard-pipeline-agent-with-tooltip:hover .dashboard-pipeline-agent-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-12px);
+  transition-delay: 0.6s;
+}
+
+/* Hover-state behouden voor de bestaande agent card styling */
+.dashboard-pipeline-agent-with-tooltip .dashboard-pipeline-agent-inner {
+  padding: 12px 8px;
+}
+
+.dashboard-pipeline-agent-with-tooltip.dashboard-pipeline-agent {
+  padding: 0;
+}
+
+/* Tooltip via portal (buiten pipeline) — wolkje schaalt mee met tekst, geen scrollbar */
+.dashboard-pipeline-agent-tooltip-portal {
+  padding: 12px 14px;
+  background: #1e293b;
+  color: #e2e8f0;
+  font-size: clamp(0.6875rem, 1.8vw, 0.75rem);
+  line-height: 1.45;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  z-index: 9999;
+  pointer-events: none;
+  text-align: left;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  white-space: normal;
+  position: relative;
+}
+
+.dashboard-pipeline-agent-tooltip-portal::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: #1e293b;
+}
+
+.dashboard-pipeline-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--border) 10%, var(--border) 90%, transparent 100%);
+  margin: 22px 0 18px;
+}
+
+.dashboard-pipeline-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 28px 40px;
+}
+
+.dashboard-pipeline-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-pipeline-stat-value {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.3125rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-pipeline-stat-warning {
+  color: var(--amber);
+}
+
+.dashboard-pipeline-stat-success {
+  color: var(--success);
+}
+
+.dashboard-pipeline-stat-error {
+  color: var(--error);
+}
+
+.dashboard-pipeline-stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* KPI-rij compacter */
+.dashboard-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.dashboard-kpi-link {
+  text-decoration: none;
+}
+
+.dashboard-kpi-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  border-top: 3px solid var(--slate-blue);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: box-shadow 0.15s;
+}
+
+.dashboard-kpi-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-kpi-value {
+  display: block;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.dashboard-kpi-label {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+/* Twee kolommen — compacter */
+.dashboard-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.dashboard-card-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--navy);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-card-scroll {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Activiteitenlijst compacter */
+.dashboard-activity-list {
+  list-style: none;
+}
+
+.dashboard-activity-item {
+  display: flex;
+  gap: 8px;
+  padding: 6px 14px;
+  border-bottom: 1px solid #f3f4f6;
+  align-items: flex-start;
+}
+
+.dashboard-activity-item:last-child {
+  border-bottom: none;
+}
+
+.dashboard-activity-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dashboard-activity-text {
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.dashboard-activity-meta {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  display: block;
+}
+
+/* Deadlines compacter */
+.dashboard-deadlines-list {
+  list-style: none;
+}
+
+.dashboard-deadlines-list li {
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.dashboard-deadlines-list li:last-child .dashboard-deadline-row {
+  border-bottom: none;
+}
+
+.dashboard-deadline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.12s;
+}
+
+.dashboard-deadline-row:hover {
+  background: #f9fafb;
+}
+
+.dashboard-deadline-days {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  background: var(--warning-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  font-family: 'IBM Plex Mono', monospace;
+  flex-shrink: 0;
+}
+
+.dashboard-deadline-days[data-urgent="true"] {
+  background: var(--error-bg);
+}
+
+.dashboard-deadline-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.dashboard-deadline-title {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-deadline-meta {
+  font-size: 0.625rem;
+  font-weight: 500;
+}
+
+/* Lege states */
+.dashboard-empty {
+  padding: 20px 14px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.dashboard-empty-icon {
+  width: 28px;
+  height: 28px;
+  margin-bottom: 8px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+  opacity: 0.7;
+}
+
+/* Team page card hover */
+.team-card-hover:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
