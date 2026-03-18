@@ -717,3 +717,121 @@ input, textarea, select {
 .team-card-hover:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
+
+/* Sectie-inhoud: opgemaakte Markdown/HTML in de app */
+.section-content-preview {
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  word-wrap: break-word;
+}
+.section-content-preview > :first-child {
+  margin-top: 0;
+}
+.section-content-preview > :last-child {
+  margin-bottom: 0;
+}
+.section-content-preview h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 1.1rem;
+  padding-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border);
+}
+.section-content-preview h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 1.6rem 0 0.8rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid rgba(88, 89, 91, 0.15);
+}
+.section-content-preview h3 {
+  font-family: 'Syne', sans-serif;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 1.2rem 0 0.6rem;
+}
+.section-content-preview h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 1.05rem 0 0.5rem;
+}
+.section-content-preview p {
+  margin: 0 0 1.15rem;
+}
+.section-content-preview ul, .section-content-preview ol {
+  margin: 0 0 1.15rem 1.35rem;
+  padding: 0;
+}
+.section-content-preview li {
+  margin-bottom: 0.35rem;
+}
+.section-content-preview strong {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.section-content-preview em {
+  font-style: italic;
+}
+.section-content-preview table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.15rem 0;
+  font-size: 12px;
+}
+.section-content-preview th,
+.section-content-preview td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+}
+.section-content-preview th {
+  background: #f8fafc;
+  font-weight: 600;
+  color: var(--navy);
+}
+.section-content-preview blockquote {
+  margin: 1.15rem 0;
+  padding: 0 1rem;
+  border-left: 4px solid var(--slate-blue);
+  color: var(--text-secondary);
+}
+.section-content-preview code {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 0.9em;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.section-content-preview pre {
+  margin: 1.15rem 0;
+  padding: 12px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow-x: auto;
+}
+.section-content-preview pre code {
+  background: none;
+  padding: 0;
+}
+.section-content-preview hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.6rem 0;
+}
+.section-content-preview a {
+  color: var(--slate-blue);
+  text-decoration: none;
+}
+.section-content-preview a:hover {
+  text-decoration: underline;
+}

@@ -16,16 +16,21 @@ export async function PATCH(
     const { id, sId } = await params
     const body = await request.json()
 
-    const allowed = ['title', 'content', 'status', 'wordCount', 'lastEditedBy', 'lastEditedAt', 'aiGenerated']
-    const updates: Record<string, any> = { lastEditedBy: userId, lastEditedAt: new Date() }
+    // Alleen server bepaalt lastEditedAt; negeer waarde uit body (voorkomt typefouten met ISO-string)
+    const allowed = ['title', 'content', 'status', 'wordCount', 'lastEditedBy', 'aiGenerated']
+    const updates: Record<string, unknown> = { lastEditedBy: userId, lastEditedAt: new Date() }
     for (const key of allowed) {
-      if (key in body) updates[key] = body[key]
+      if (key in body && body[key] !== undefined) updates[key] = body[key]
     }
 
     const [updated] = await db.update(tenderSections)
       .set(updates)
       .where(eq(tenderSections.id, sId))
       .returning()
+
+    if (!updated) {
+      return NextResponse.json({ error: 'Sectie niet gevonden' }, { status: 404 })
+    }
 
     if (body.status === 'approved') {
       await db.insert(tenderActivities).values({
@@ -39,6 +44,7 @@ export async function PATCH(
 
     return NextResponse.json(updated)
   } catch (error) {
+    console.error('[PATCH /api/tenders/.../sections/[sId]]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

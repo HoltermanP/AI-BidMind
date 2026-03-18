@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
@@ -55,12 +57,14 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
   const [editorContent, setEditorContent] = useState('')
   const [generating, setGenerating] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newSection, setNewSection] = useState({ title: '', sectionType: 'plan_van_aanpak' })
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const approved = sections.filter((s) => s.status === 'approved').length
   const total = sections.length
+
+  const isDirty = editingSection ? editorContent !== (editingSection.content || '') : false
 
   const addSection = async () => {
     try {
@@ -154,6 +158,26 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
     }
   }
 
+  const downloadWord = async () => {
+    setDownloading(true)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/sections/export`)
+      if (!res.ok) throw new Error()
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Aanbieding_${(tender.title || 'document').replace(/[^\w\s-]/g, '').replace(/\s+/g, '_').slice(0, 60)}.docx`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast('Word-document gedownload', 'success')
+    } catch {
+      toast('Download mislukt', 'error')
+    } finally {
+      setDownloading(false)
+    }
+  }
+
   const changeStatus = async (id: string, status: string) => {
     try {
       const res = await fetch(`/api/tenders/${tender.id}/sections/${id}`, {
@@ -199,7 +223,9 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             >
               Genereer met AI
             </Button>
-            <Button size="sm" variant="amber" loading={saving} onClick={saveSection}>Opslaan</Button>
+            <Button size="sm" variant="amber" loading={saving} onClick={saveSection} disabled={!isDirty}>
+              Opslaan
+            </Button>
             {editingSection.status === 'draft' && (
               <Button size="sm" variant="secondary" onClick={() => changeStatus(editingSection.id, 'in_review')}>
                 Naar review
@@ -213,53 +239,21 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
           </div>
         </div>
 
-        {/* Editor */}
-        <div style={{ flex: 1, background: 'white', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: '#FAFAF8', display: 'flex', gap: 4 }}>
-            {['**Vet**', '*Cursief*', '# Kop', '## Subkop', '- Lijst'].map((fmt) => (
-              <button
-                key={fmt}
-                onClick={() => {
-                  const textarea = textareaRef.current
-                  if (!textarea) return
-                  const start = textarea.selectionStart
-                  const end = textarea.selectionEnd
-                  const selected = editorContent.slice(start, end)
-                  const prefix = fmt.split(selected.length > 0 ? selected : '')[0].replace(/[^*#\-\s]/g, '').trimEnd() || fmt.split(' ')[0]
-                  const newContent = editorContent.slice(0, start) + prefix + ' ' + selected + editorContent.slice(end)
-                  setEditorContent(newContent)
-                }}
-                style={{
-                  background: 'none', border: '1px solid var(--border)', borderRadius: 3, padding: '3px 8px',
-                  fontSize: 11, cursor: 'pointer', color: '#374151', fontFamily: 'IBM Plex Mono, monospace',
-                }}
-              >
-                {fmt}
-              </button>
-            ))}
-            <span style={{ marginLeft: 'auto', fontSize: 11, color: 'var(--muted)' }}>
-              {editorContent.trim().split(/\s+/).filter(Boolean).length} woorden
-            </span>
+        {/* Alleen HTML-weergave */}
+        <div style={{ flex: 1, minHeight: 0, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', background: 'white', display: 'flex', flexDirection: 'column' }}>
+          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: '#F1F5F9', fontSize: 11, fontWeight: 600, color: 'var(--navy)' }}>
+            Weergave
           </div>
-          <textarea
-            ref={textareaRef}
-            value={editorContent}
-            onChange={(e) => setEditorContent(e.target.value)}
-            placeholder="Begin met schrijven, of gebruik 'Genereer met AI'..."
-            style={{
-              flex: 1,
-              padding: '16px 20px',
-              border: 'none',
-              outline: 'none',
-              resize: 'none',
-              fontSize: 13,
-              fontFamily: 'IBM Plex Sans, sans-serif',
-              lineHeight: 1.7,
-              color: '#1A1A2E',
-              background: 'white',
-              minHeight: 400,
-            }}
-          />
+          <div
+            className="section-content-preview"
+            style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', minHeight: 200 }}
+          >
+            {editorContent.trim() ? (
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{editorContent}</ReactMarkdown>
+            ) : (
+              <span style={{ color: 'var(--muted)', fontSize: 13 }}>Tekst verschijnt hier opgemaakt.</span>
+            )}
+          </div>
         </div>
       </div>
     )
@@ -290,7 +284,17 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{approved}/{total} goedgekeurd</span>
           </div>
         </div>
-        <div style={{ marginLeft: 'auto', flexShrink: 0 }}>
+        <div style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', gap: 8 }}>
+          <Button
+            size="sm"
+            variant="secondary"
+            loading={downloading}
+            onClick={downloadWord}
+            disabled={sections.length === 0}
+            icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>}
+          >
+            Download als Word
+          </Button>
           <Button
             size="sm"
             variant="secondary"

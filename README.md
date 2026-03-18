@@ -7,7 +7,7 @@ Professioneel tendermanagementsysteem voor infrastructuuraannemers. Ondersteunt 
 - **Next.js 16** (App Router, TypeScript)
 - **Neon** (Postgres via `@neondatabase/serverless`)
 - **Clerk** (authenticatie + webhook user sync)
-- **OpenAI GPT-4o** (documentanalyse, vraagengeneratie, aanbiedingsteksten)
+- **AI**: OpenAI en Anthropic Claude — per taak gekozen (zware analyse/schrijven → Claude; vraagengeneratie → OpenAI)
 - **Drizzle ORM** (schema, migraties, queries)
 - **Framer Motion** (animaties)
 - Custom UI — geen componentbibliotheek
@@ -27,8 +27,11 @@ CLERK_WEBHOOK_SECRET=whsec_...
 # Neon — https://console.neon.tech
 DATABASE_URL=postgresql://username:password@ep-....neon.tech/neondb?sslmode=require
 
-# OpenAI — https://platform.openai.com
+# OpenAI — https://platform.openai.com (o.a. vraagengeneratie)
 OPENAI_API_KEY=sk-...
+
+# Anthropic — https://console.anthropic.com (documentanalyse, sectieteksten)
+ANTHROPIC_API_KEY=sk-ant-...
 
 # UploadThing (optioneel voor echte file uploads)
 UPLOADTHING_SECRET=sk_live_...

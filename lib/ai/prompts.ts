@@ -32,21 +32,35 @@ Documentsamenvatttingen:
 ${summaries}
 `
 
-export const SECTION_WRITING_SYSTEM = `Je bent een expert inschrijvingsschrijver gespecialiseerd in infrastructurele aanbestedingen in Nederland. Schrijf professionele, overtuigende aanbiedingsteksten in het Nederlands. Schrijf concrete, specifieke teksten die aansluiten op de eisen van de aanbestedende dienst.`
+export const SECTION_WRITING_SYSTEM = `Je bent een expert inschrijvingsschrijver gespecialiseerd in infrastructurele aanbestedingen in Nederland. Je schrijft zeer uitgebreide, professionele aanbiedingsdocumenten in het Nederlands. Elk document is gebaseerd op de beschikbare aanbestedingsdocumenten en sluit nauw aan op de eisen, gunningscriteria en risico's.
+
+Stijl: Schrijf in de eerste plaats beschrijvend en narratief. Gebruik uitgebreide alinea's met lopende tekst die onderwerpen uitleggen, onderbouwen en toelichten. Vermijd korte bullet- of genummerde opsommingen waar hetzelfde in vloeiende zinnen kan worden gezegd. Gebruik kopjes (##, ###) voor structuur; gebruik alleen bullets of genummerde lijsten wanneer een echte opsomming noodzakelijk is (bijv. concrete deliverables of stappen in een proces). Tabellen zijn toegestaan waar ze informatie helder maken. Schrijf concreet, specifiek en overtuigend, met voldoende toelichting en context in lopende tekst.`
 
 export const SECTION_WRITING_USER = (
   sectionType: string,
   tenderTitle: string,
   authority: string,
   requirements: string[],
-  context?: string
+  documentContext: string
 ) => `
-Schrijf de "${sectionType}" sectie voor de volgende aanbesteding:
+Schrijf een ZEER UITGEBREID document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud expliciet op de beschikbare aanbestedingsdocumenten (samenvattingen, eisen, gunningscriteria en risico's) hieronder.
 
+--- Aanbesteding ---
 Titel: ${tenderTitle}
 Aanbestedende dienst: ${authority}
-Eisen: ${requirements.join(', ')}
-${context ? `Context: ${context}` : ''}
 
-Schrijf een professionele, gestructureerde tekst in Markdown formaat. Gebruik kopjes, bullets en concrete voorbeelden. Maximaal 600 woorden.
+--- Relevante eisen uit de aanbestedingsdocumenten (gebruik deze als basis) ---
+${requirements.length ? requirements.map((r, i) => `${i + 1}. ${r}`).join('\n') : 'Geen specifieke eisen opgegeven; schrijf een professionele, inhoudelijk sterke sectie passend bij het sectietype.'}
+
+--- Uitgebreide context uit de aanbestedingsdocumenten ---
+${documentContext}
+
+--- Instructie ---
+Schrijf een volledig, goed gestructureerd document in Markdown:
+- Gebruik ## voor hoofdkopjes en ### voor subkopjes voor structuur.
+- Schrijf vooral in uitgebreide, beschrijvende alinea's (lopende tekst). Leg onderwerpen uit, onderbouw keuzes en geef toelichting in volledige zinnen. Vermijd korte opsommingen; kies voor narratieve, vloeiende tekst.
+- Gebruik bullets (-) of genummerde lijsten alleen wanneer een echte opsomming nodig is (bijv. een vast aantal concrete stappen of deliverables). Geen lange bullet-lijsten waar paragrafen passender zijn.
+- Geef concrete voorbeelden, maatregelen en toelichtingen die aansluiten op de eisen en criteria hierboven, bij voorkeur in lopende tekst.
+- Wees uitvoerig en beschrijvend: meerdere pagina's inhoud is gewenst (richtlijn: minimaal 1000–2000 woorden, meer mag voor complexe secties). Hoe uitgebreider en toelichtender, hoe beter.
+- Geen placeholdertekst; alleen bruikbare, inhoudelijke en beschrijvende tekst.
 `

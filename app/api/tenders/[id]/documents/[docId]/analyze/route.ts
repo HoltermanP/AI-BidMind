@@ -3,8 +3,8 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { tenders, tenderDocuments, tenderActivities } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import { openai } from '@/lib/ai/client'
 import { DOCUMENT_ANALYSIS_SYSTEM, DOCUMENT_ANALYSIS_USER } from '@/lib/ai/prompts'
+import { runCompletion, isAgentAvailable } from '@/lib/ai/run'
 import { fetchDocumentContent } from '@/lib/tenderned/client'
 import { extractTextFromBuffer } from '@/lib/documents/extract-text'
 
@@ -18,7 +18,8 @@ export async function POST(
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!db) return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
-    if (!openai) return NextResponse.json({ error: 'OpenAI not configured' }, { status: 503 })
+    if (!isAgentAvailable('document_analysis'))
+      return NextResponse.json({ error: 'AI-provider voor documentanalyse niet geconfigureerd (ANTHROPIC_API_KEY)' }, { status: 503 })
 
     const { id, docId } = await params
 
@@ -60,21 +61,16 @@ export async function POST(
     let summary = ''
 
     try {
-      const response = await openai!.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: DOCUMENT_ANALYSIS_SYSTEM },
-          { role: 'user', content: DOCUMENT_ANALYSIS_USER(documentContext) },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 1500,
-      })
-
-      const content = response.choices[0]?.message?.content || '{}'
-      analysisJson = JSON.parse(content)
+      const content = await runCompletion(
+        'document_analysis',
+        DOCUMENT_ANALYSIS_SYSTEM,
+        DOCUMENT_ANALYSIS_USER(documentContext),
+        { jsonMode: true }
+      )
+      analysisJson = JSON.parse(content || '{}')
       summary = analysisJson.summary || ''
     } catch (aiError) {
-      // Fallback mock analysis if OpenAI fails
+      // Fallback mock analysis bij AI-fout
       analysisJson = {
         summary: `Analyse van ${doc.fileName}: Dit document bevat specificaties en eisen voor de aanbesteding.`,
         key_requirements: ['Conform UAV-GC', 'VCA certificering vereist', 'Minimaal 3 referentieprojecten'],

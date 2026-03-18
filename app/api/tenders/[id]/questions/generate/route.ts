@@ -3,15 +3,15 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { tenderQuestions, tenderDocuments, tenders } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import { openai } from '@/lib/ai/client'
 import { QUESTION_GENERATION_SYSTEM, QUESTION_GENERATION_USER } from '@/lib/ai/prompts'
+import { runCompletion, isAgentAvailable } from '@/lib/ai/run'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { userId } = await auth()
     if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     if (!db) return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
-    if (!openai) {
+    if (!isAgentAvailable('question_generation')) {
       // Geen API key: gebruik direct de mockvragen
       const { id } = await params
       const generatedQuestions = [
@@ -50,18 +50,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     let generatedQuestions: any[] = []
 
     try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: QUESTION_GENERATION_SYSTEM },
-          { role: 'user', content: QUESTION_GENERATION_USER(context) },
-        ],
-        response_format: { type: 'json_object' },
-        max_tokens: 2000,
-      })
-
-      const content = response.choices[0]?.message?.content || '{"questions":[]}'
-      const parsed = JSON.parse(content)
+      const content = await runCompletion(
+        'question_generation',
+        QUESTION_GENERATION_SYSTEM,
+        QUESTION_GENERATION_USER(context),
+        { jsonMode: true }
+      )
+      const parsed = JSON.parse(content || '{"questions":[]}')
       generatedQuestions = Array.isArray(parsed) ? parsed : (parsed.questions || [])
     } catch (aiError) {
       // Fallback mock questions
