@@ -249,7 +249,17 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', minHeight: 200 }}
           >
             {editorContent.trim() ? (
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{editorContent}</ReactMarkdown>
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  img: ({ src, alt, ...props }) =>
+                    typeof src === 'string' && src.trim() !== '' ? (
+                      <img src={src} alt={alt ?? ''} {...props} />
+                    ) : null
+                }}
+              >
+                {editorContent}
+              </ReactMarkdown>
             ) : (
               <span style={{ color: 'var(--muted)', fontSize: 13 }}>Tekst verschijnt hier opgemaakt.</span>
             )}
