@@ -99,13 +99,16 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
       }}
     >
       {/* Header – geen sticky/z-index zodat body-knoppen nooit bedekt worden */}
-      <div style={{
+      <div
+        className="tender-detail-header-inner"
+        style={{
         background: 'white',
         borderBottom: '1px solid var(--border)',
         padding: '0 32px',
         flexShrink: 0,
         minWidth: 0,
-      }}>
+      }}
+      >
         {/* Top row – minder verticale ruimte zodat kop omhoog komt */}
         <div style={{ paddingTop: 4, paddingBottom: 6, display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap' }}>
           <Link
@@ -285,9 +288,9 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
       </div>
 
       {/* Main content – alleen hier scrollt; header blijft in flow */}
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
+      <div className="tender-detail-layout" style={{ display: 'flex', flex: 1, overflow: 'hidden', minHeight: 0 }}>
         {/* Left: Tab content – voldoende ruimte onder tab-balk */}
-        <div style={{ flex: 1, minWidth: 360, overflow: 'auto', padding: '24px 32px 32px', boxSizing: 'border-box' }} className="tender-tab-scroll">
+        <div style={{ flex: 1, minWidth: 0, overflow: 'auto', padding: '24px 32px 32px', boxSizing: 'border-box' }} className="tender-tab-scroll">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -317,7 +320,9 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
         </div>
 
         {/* Right: Sidebar */}
-        <div style={{
+        <div
+          className="tender-detail-sidebar"
+          style={{
           width: 280,
           borderLeft: '1px solid var(--border)',
           background: 'white',
@@ -327,7 +332,8 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
           display: 'flex',
           flexDirection: 'column',
           gap: 20,
-        }}>
+        }}
+        >
           {/* Manager */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted)', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: 10 }}>Tendermanager</div>

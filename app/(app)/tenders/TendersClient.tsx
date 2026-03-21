@@ -88,8 +88,17 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
   const [tenderNedViewPage, setTenderNedViewPage] = useState(0)
   const TENDER_NED_PAGE_SIZE = 20
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 767px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
+  }, [])
 
   const handleDeleteTender = useCallback(async (e: React.MouseEvent, tenderId: string, tenderTitle: string) => {
     e.stopPropagation()
@@ -285,9 +294,18 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
   }
 
   return (
-    <div style={{ padding: '16px 32px 48px', position: 'relative' }}>
+    <div className="app-page-padding" style={{ position: 'relative' }}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          marginBottom: 24,
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 14 : 0,
+        }}
+      >
         <div>
           <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
             Tenders
@@ -297,10 +315,11 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
             {statusFilter !== 'all' || goNoGoFilter !== 'all' || search ? ' (gefilterd)' : ''}
           </p>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
+        <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
           <Button
             variant="secondary"
             onClick={openTenderNed}
+            style={isMobile ? { width: '100%', justifyContent: 'center' } : undefined}
             icon={
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -425,7 +444,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
                     {(tenderNedSearch || tenderNedProcedureFilter !== 'all') && ' (gefilterd)'}
                   </p>
                   <div style={{ background: 'var(--off-white)', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <table className="tenderned-import-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                       <thead>
                         <tr style={{ borderBottom: '2px solid var(--border)' }}>
                           {[
@@ -464,18 +483,18 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
                           </tr>
                         ) : tenderNedPageItems.map((item) => (
                           <tr key={item.publicatieId} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                            <td style={{ padding: '10px 12px' }}>
+                            <td data-label="Titel" style={{ padding: '10px 12px' }}>
                               <div style={{ fontWeight: 600, color: 'var(--navy)' }}>{item.title}</div>
                               {item.referenceNumber && (
                                 <div style={{ fontSize: 11, color: 'var(--muted)', fontFamily: 'IBM Plex Mono, monospace' }}>{item.referenceNumber}</div>
                               )}
                             </td>
-                            <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{item.contractingAuthority || '—'}</td>
-                            <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
+                            <td data-label="Aanbestedende dienst" style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{item.contractingAuthority || '—'}</td>
+                            <td data-label="Sluitingsdatum" style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>
                               {item.deadlineSubmission ? formatDate(new Date(item.deadlineSubmission)) : '—'}
                             </td>
-                            <td style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{item.procedureType || '—'}</td>
-                            <td style={{ padding: '10px 12px' }}>
+                            <td data-label="Procedure" style={{ padding: '10px 12px', color: 'var(--text-secondary)' }}>{item.procedureType || '—'}</td>
+                            <td data-label="Actie" style={{ padding: '10px 12px' }}>
                               <Button
                                 variant="secondary"
                                 size="sm"
@@ -595,6 +614,36 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
           <option value="go">Go</option>
           <option value="no_go">No Go</option>
         </select>
+        {isMobile && (
+          <select
+            value={`${sortBy}:${sortDir}`}
+            onChange={(e) => {
+              const [s, d] = e.target.value.split(':') as ['deadline' | 'updated' | 'value', 'asc' | 'desc']
+              setSortBy(s)
+              setSortDir(d)
+            }}
+            style={{
+              padding: '8px 10px',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              fontSize: 13,
+              fontFamily: 'IBM Plex Sans, sans-serif',
+              color: 'var(--text-primary)',
+              background: 'white',
+              cursor: 'pointer',
+              outline: 'none',
+              flex: '1 1 100%',
+              minWidth: 0,
+            }}
+          >
+            <option value="updated:desc">Sorteer: laatst bijgewerkt (nieuw)</option>
+            <option value="updated:asc">Sorteer: laatst bijgewerkt (oud)</option>
+            <option value="deadline:asc">Sorteer: deadline (dichtstbij)</option>
+            <option value="deadline:desc">Sorteer: deadline (verst)</option>
+            <option value="value:desc">Sorteer: waarde (hoog)</option>
+            <option value="value:asc">Sorteer: waarde (laag)</option>
+          </select>
+        )}
         {(search || statusFilter !== 'all' || goNoGoFilter !== 'all') && (
           <button
             onClick={() => { setSearch(''); setStatusFilter('all'); setGoNoGoFilter('all') }}
@@ -609,7 +658,179 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
         )}
       </div>
 
-      {/* Table */}
+      {/* Tabel (desktop) / kaarten (mobiel) */}
+      {isMobile ? (
+        <div className="tenders-list-mobile">
+          {filtered.length === 0 ? (
+            <div
+              style={{
+                padding: '48px 20px',
+                textAlign: 'center',
+                color: 'var(--muted)',
+                background: 'white',
+                border: '1px solid var(--border)',
+                borderRadius: 8,
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+                <div>
+                  <p style={{ fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>Geen tenders gevonden</p>
+                  <p style={{ fontSize: 12 }}>Pas de filters aan of maak een nieuwe tender aan</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            filtered.map((tender, i) => {
+              const manager = tender.tenderManagerId ? userMap[tender.tenderManagerId] : null
+              const daysLeft = getDaysUntil(tender.deadlineSubmission)
+              const isUrgent = daysLeft !== null && daysLeft <= 7 && daysLeft >= 0
+
+              return (
+                <motion.div
+                  key={tender.id}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.03, duration: 0.2 }}
+                  role="button"
+                  tabIndex={0}
+                  className="tender-list-mobile-card"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault()
+                      router.push(`/tenders/${tender.id}`)
+                    }
+                  }}
+                  onClick={() => router.push(`/tenders/${tender.id}`)}
+                  style={{
+                    background: 'white',
+                    border: '1px solid var(--border)',
+                    borderRadius: 8,
+                    padding: 14,
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 10, marginBottom: 12 }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ marginBottom: 8 }}>
+                        <Badge variant="status" value={tender.status || 'new'} />
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--navy)', lineHeight: 1.3, marginBottom: 4 }}>
+                        {tender.title || '—'}
+                      </div>
+                      {tender.referenceNumber && (
+                        <div style={{ fontSize: 11, fontFamily: 'IBM Plex Mono, monospace', color: 'var(--muted)' }}>
+                          {tender.referenceNumber}
+                        </div>
+                      )}
+                      {tender.contractingAuthority && (
+                        <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 6 }}>{tender.contractingAuthority}</div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      aria-label="Tender verwijderen"
+                      disabled={deletingId === tender.id}
+                      onClick={(ev) => handleDeleteTender(ev, tender.id, tender.title || '')}
+                      style={{
+                        padding: 8,
+                        border: 'none',
+                        background: 'transparent',
+                        color: 'var(--muted)',
+                        cursor: deletingId === tender.id ? 'wait' : 'pointer',
+                        borderRadius: 4,
+                        flexShrink: 0,
+                      }}
+                    >
+                      {deletingId === tender.id ? (
+                        <span style={{ fontSize: 12 }}>…</span>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '10px 12px',
+                      fontSize: 12,
+                      color: 'var(--text-secondary)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                        Deadline
+                      </div>
+                      {tender.deadlineSubmission ? (
+                        <>
+                          <div style={{ color: isUrgent ? 'var(--error)' : 'var(--text-primary)', fontWeight: isUrgent ? 600 : 400 }}>
+                            {formatDate(tender.deadlineSubmission)}
+                          </div>
+                          {daysLeft !== null && daysLeft >= 0 && (
+                            <div style={{ fontSize: 11, color: isUrgent ? '#DC2626' : 'var(--muted)' }}>
+                              {daysLeft === 0 ? 'Vandaag' : `${daysLeft}d`}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        '—'
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                        Waarde
+                      </div>
+                      <div style={{ fontFamily: 'IBM Plex Mono, monospace', color: 'var(--text-primary)' }}>
+                        {formatCurrency(tender.estimatedValue)}
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                        Manager
+                      </div>
+                      {manager ? (
+                        <Avatar name={manager.name || ''} src={manager.avatarUrl} size={28} />
+                      ) : (
+                        '—'
+                      )}
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                        Win% / Go
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8 }}>
+                        <span
+                          style={{
+                            fontSize: 13,
+                            fontWeight: 700,
+                            fontFamily: 'IBM Plex Mono, monospace',
+                            color: (tender.winProbability || 0) >= 50 ? '#059669' : 'var(--text-secondary)',
+                          }}
+                        >
+                          {tender.winProbability ?? 0}%
+                        </span>
+                        <Badge variant="gonogo" value={tender.goNoGo || 'pending'} />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })
+          )}
+        </div>
+      ) : (
       <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -792,6 +1013,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
           </table>
         </div>
       </div>
+      )}
     </div>
   )
 }

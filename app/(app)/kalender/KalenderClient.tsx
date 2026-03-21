@@ -60,8 +60,8 @@ export default function KalenderClient({ tenders }: Props) {
   }
 
   return (
-    <div style={{ padding: '16px 32px 48px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 }}>
+    <div className="app-page-padding">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
             Kalender
@@ -94,7 +94,7 @@ export default function KalenderClient({ tenders }: Props) {
       </div>
 
       {/* Legend */}
-      <div style={{ display: 'flex', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)' }}>
           <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--amber)' }} />
           NVI Deadline

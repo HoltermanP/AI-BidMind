@@ -5,6 +5,7 @@ import { formatDate, formatRelativeTime, getDaysUntil, STATUS_COLORS, STATUS_LAB
 import Avatar from '@/components/ui/Avatar'
 import Link from 'next/link'
 import PipelineAgentCards from '@/components/dashboard/PipelineAgentCards'
+import PipelineMobileStack from '@/components/dashboard/PipelineMobileStack'
 
 const PIPELINE_AGENT_LABELS: Record<string, string> = {
   new: 'Intake Agent',
@@ -143,34 +144,45 @@ export default async function DashboardPage() {
           <Link href="/tenders" className="dashboard-pipeline-link">Alle tenders →</Link>
         </div>
 
-        <div className="dashboard-pipeline-grid">
-          {/* Stage cards — kolommen 0, 2, 4, 6, 8, 10, 12, 14 */}
-          {pipeline.map((stage, i) => {
-            const colors = STATUS_COLORS[stage.stage]
-            const bg = colors?.bg ?? '#F3F4F6'
-            const accent = colors?.text ?? 'var(--text-secondary)'
-            return (
-              <Link
-                key={stage.stage}
-                href={`/tenders?status=${stage.stage}`}
-                className="dashboard-pipeline-stage"
-                style={{ '--stage-bg': bg, '--stage-accent': accent, gridColumn: 2 * i + 1 } as React.CSSProperties}
-              >
-                <span className="dashboard-pipeline-count">{stage.count}</span>
-                <span className="dashboard-pipeline-label">{STATUS_LABELS[stage.stage] ?? stage.stage}</span>
-              </Link>
-            )
-          })}
-          {/* Pijlen — kolommen 1, 3, 5, 7, 9, 11, 13 */}
-          {Array.from({ length: 7 }).map((_, i) => (
-            <span key={`arrow-${i}`} className="dashboard-pipeline-arrow" style={{ gridColumn: 2 * i + 2 }} aria-hidden>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-              </svg>
-            </span>
-          ))}
-          {/* Agent cards — onder de stage cards, tooltip via portal (tekst past in wolkje) */}
-          <PipelineAgentCards
+        <div className="dashboard-pipeline-desktop-only">
+          <div className="dashboard-pipeline-grid">
+            {/* Stage cards — kolommen 0, 2, 4, 6, 8, 10, 12, 14 */}
+            {pipeline.map((stage, i) => {
+              const colors = STATUS_COLORS[stage.stage]
+              const bg = colors?.bg ?? '#F3F4F6'
+              const accent = colors?.text ?? 'var(--text-secondary)'
+              return (
+                <Link
+                  key={stage.stage}
+                  href={`/tenders?status=${stage.stage}`}
+                  className="dashboard-pipeline-stage"
+                  style={{ '--stage-bg': bg, '--stage-accent': accent, gridColumn: 2 * i + 1 } as React.CSSProperties}
+                >
+                  <span className="dashboard-pipeline-count">{stage.count}</span>
+                  <span className="dashboard-pipeline-label">{STATUS_LABELS[stage.stage] ?? stage.stage}</span>
+                </Link>
+              )
+            })}
+            {/* Pijlen — kolommen 1, 3, 5, 7, 9, 11, 13 */}
+            {Array.from({ length: 7 }).map((_, i) => (
+              <span key={`arrow-${i}`} className="dashboard-pipeline-arrow" style={{ gridColumn: 2 * i + 2 }} aria-hidden>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+              </span>
+            ))}
+            {/* Agent cards — onder de stage cards, tooltip via portal (tekst past in wolkje) */}
+            <PipelineAgentCards
+              pipeline={pipeline}
+              totalTenders={totalTenders}
+              agentLabels={PIPELINE_AGENT_LABELS}
+              agentDescriptions={PIPELINE_AGENT_DESCRIPTIONS}
+            />
+          </div>
+        </div>
+
+        <div className="dashboard-pipeline-mobile-only">
+          <PipelineMobileStack
             pipeline={pipeline}
             totalTenders={totalTenders}
             agentLabels={PIPELINE_AGENT_LABELS}

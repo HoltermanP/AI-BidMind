@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 export default function InstellingenPage() {
   return (
-    <div style={{ padding: '16px 32px 48px', maxWidth: 700 }}>
+    <div className="app-page-padding" style={{ maxWidth: 700 }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
           Instellingen

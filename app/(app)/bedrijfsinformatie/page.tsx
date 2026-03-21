@@ -161,14 +161,14 @@ export default function BedrijfsinformatiePage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '16px 32px 48px', maxWidth: 800 }}>
+      <div className="app-page-padding" style={{ maxWidth: 800 }}>
         <p style={{ color: 'var(--text-secondary)' }}>Laden...</p>
       </div>
     )
   }
 
   return (
-    <div style={{ padding: '16px 32px 48px', maxWidth: 800 }}>
+    <div className="app-page-padding" style={{ maxWidth: 800 }}>
       <div style={{ marginBottom: 28 }}>
         <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
           Bedrijfsinformatie

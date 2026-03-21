@@ -1,10 +1,16 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 
 export const metadata: Metadata = {
   title: 'BidMind – AI voor winnende aanbestedingen',
   description: 'BidMind – AI voor winnende aanbestedingen. Professioneel tendermanagement voor infrastructuuraannemers.',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
 }
 
 const isUiOnly = process.env.NEXT_PUBLIC_UI_ONLY === 'true'

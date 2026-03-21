@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
 import { BidMindLogo } from '@/components/ui/BidMindLogo'
+import { useMobileNav } from '@/components/layout/MobileNavContext'
 
 const UserButton = dynamic(
   () => import('@clerk/nextjs').then((m) => m.UserButton),
@@ -101,54 +102,79 @@ const navItems = [
 export default function Sidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const { open, setOpen, isMobile } = useMobileNav()
+  const navCollapsed = !isMobile && collapsed
 
   return (
-    <motion.aside
-      initial={false}
-      animate={{ width: collapsed ? 56 : 220 }}
-      transition={{ duration: 0.2, ease: 'easeInOut' }}
-      style={{
-        background: 'var(--navy)',
-        borderRight: '1px solid var(--navy-mid)',
-        display: 'flex',
-        flexDirection: 'column',
-        height: '100vh',
-        position: 'sticky',
-        top: 0,
-        overflow: 'hidden',
-        flexShrink: 0,
-        zIndex: 40,
-      }}
-    >
+    <>
+      {isMobile && open && (
+        <button
+          type="button"
+          aria-label="Menu sluiten"
+          onClick={() => setOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 45,
+            border: 'none',
+            padding: 0,
+            margin: 0,
+            background: 'rgba(15, 23, 42, 0.45)',
+            cursor: 'pointer',
+          }}
+        />
+      )}
+      <motion.aside
+        initial={false}
+        animate={
+          isMobile
+            ? { x: open ? 0 : '-100%', width: 280 }
+            : { x: 0, width: collapsed ? 56 : 220 }
+        }
+        transition={{ duration: 0.2, ease: 'easeInOut' }}
+        style={{
+          background: 'var(--navy)',
+          borderRight: '1px solid var(--navy-mid)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100vh',
+          position: isMobile ? 'fixed' : 'sticky',
+          left: isMobile ? 0 : undefined,
+          top: isMobile ? 0 : undefined,
+          overflow: 'hidden',
+          flexShrink: 0,
+          zIndex: isMobile ? 50 : 40,
+        }}
+      >
       {/* Logo's: Van Gelder + BidMind volledig + slogan */}
       <div style={{
-        padding: collapsed ? '16px 10px' : '14px 12px 16px',
+        padding: navCollapsed ? '16px 10px' : '14px 12px 16px',
         borderBottom: '1px solid var(--navy-mid)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: collapsed ? 'center' : 'stretch',
-        gap: collapsed ? 0 : 12,
-        minHeight: collapsed ? 64 : undefined,
+        alignItems: navCollapsed ? 'center' : 'stretch',
+        gap: navCollapsed ? 0 : 12,
+        minHeight: navCollapsed ? 64 : undefined,
       }}>
         {/* Van Gelder logo (donkere variant – past op sidebar) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: collapsed ? 'center' : 'flex-start',
+          justifyContent: navCollapsed ? 'center' : 'flex-start',
           flexShrink: 0,
           overflow: 'hidden',
         }}>
           <Image
             src="/van-gelder-logo.png"
             alt="Van Gelder"
-            width={collapsed ? 36 : 196}
-            height={collapsed ? 36 : 44}
-            style={{ objectFit: 'contain', width: collapsed ? 36 : '100%', maxWidth: 196, height: 'auto' }}
+            width={navCollapsed ? 36 : 196}
+            height={navCollapsed ? 36 : 44}
+            style={{ objectFit: 'contain', width: navCollapsed ? 36 : '100%', maxWidth: 196, height: 'auto' }}
             priority
           />
         </div>
         <AnimatePresence>
-          {!collapsed && (
+          {!navCollapsed && (
             <>
               {/* BidMind logo volledig (brein + tekst) */}
               <motion.div
@@ -194,12 +220,13 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={() => isMobile && setOpen(false)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 12,
-                padding: collapsed ? '10px 0' : '10px 20px',
-                justifyContent: collapsed ? 'center' : 'flex-start',
+                padding: navCollapsed ? '10px 0' : '10px 20px',
+                justifyContent: navCollapsed ? 'center' : 'flex-start',
                 position: 'relative',
                 color: isActive ? 'var(--off-white)' : 'var(--sidebar-text)',
                 textDecoration: 'none',
@@ -233,7 +260,7 @@ export default function Sidebar() {
               )}
               <span style={{ flexShrink: 0 }}>{item.icon}</span>
               <AnimatePresence>
-                {!collapsed && (
+                {!navCollapsed && (
                   <motion.span
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
@@ -258,14 +285,14 @@ export default function Sidebar() {
       {/* Bottom: collapse toggle + user */}
       <div style={{
         borderTop: '1px solid var(--navy-mid)',
-        padding: collapsed ? '12px 0' : '12px 16px',
+        padding: navCollapsed ? '12px 0' : '12px 16px',
         display: 'flex',
         flexDirection: 'column',
         gap: 8,
-        alignItems: collapsed ? 'center' : 'stretch',
+        alignItems: navCollapsed ? 'center' : 'stretch',
       }}>
-        <div style={{ display: 'flex', justifyContent: collapsed ? 'center' : 'space-between', alignItems: 'center' }}>
-          {!collapsed && (
+        <div style={{ display: 'flex', justifyContent: navCollapsed ? 'center' : 'space-between', alignItems: 'center' }}>
+          {!navCollapsed && (
             <div style={{ transform: 'scale(0.85)', transformOrigin: 'left center' }}>
               {isUiOnly ? (
                 <div
@@ -290,7 +317,8 @@ export default function Sidebar() {
             </div>
           )}
           <button
-            onClick={() => setCollapsed(!collapsed)}
+            type="button"
+            onClick={() => (isMobile ? setOpen(false) : setCollapsed(!collapsed))}
             style={{
               background: 'transparent',
               border: 'none',
@@ -301,7 +329,7 @@ export default function Sidebar() {
               display: 'flex',
               alignItems: 'center',
             }}
-            title={collapsed ? 'Uitklappen' : 'Inklappen'}
+            title={isMobile ? 'Menu sluiten' : navCollapsed ? 'Uitklappen' : 'Inklappen'}
           >
             <svg
               width="14"
@@ -312,13 +340,13 @@ export default function Sidebar() {
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              style={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
+              style={{ transform: !isMobile && navCollapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}
             >
               <polyline points="15 18 9 12 15 6"/>
             </svg>
           </button>
         </div>
-        {collapsed && (
+        {navCollapsed && (
           <div style={{ transform: 'scale(0.85)' }}>
             {isUiOnly ? (
               <div
@@ -343,5 +371,6 @@ export default function Sidebar() {
         )}
       </div>
     </motion.aside>
+    </>
   )
 }
