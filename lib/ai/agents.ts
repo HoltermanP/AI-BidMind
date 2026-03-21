@@ -9,7 +9,12 @@
 
 export type AIPlatform = 'openai' | 'anthropic'
 
-export type AgentId = 'document_analysis' | 'tender_analysis_report' | 'section_writing' | 'question_generation'
+export type AgentId =
+  | 'document_analysis'
+  | 'tender_analysis_report'
+  | 'tender_review_report'
+  | 'section_writing'
+  | 'question_generation'
 
 export interface AgentConfig {
   platform: AIPlatform
@@ -22,6 +27,7 @@ export interface AgentConfig {
  * Aanbevolen keuze per agent:
  * - document_analysis: zware analyse → Claude (beste kwaliteit voor lange documenten)
  * - tender_analysis_report: uitgebreide tenderanalyse als HTML-document → Claude
+ * - tender_review_report: reviewrapport aanbieding vs. criteria → Claude
  * - section_writing: zware schrijftaak → Claude (sterke schrijfkwaliteit)
  * - question_generation: gestructureerde output uit samenvattingen → OpenAI goedkoper model volstaat
  */
@@ -32,6 +38,11 @@ export const AGENT_CONFIG: Record<AgentId, AgentConfig> = {
     maxTokens: 1500,
   },
   tender_analysis_report: {
+    platform: 'anthropic',
+    model: 'claude-sonnet-4-20250514',
+    maxTokens: 16384,
+  },
+  tender_review_report: {
     platform: 'anthropic',
     model: 'claude-sonnet-4-20250514',
     maxTokens: 16384,

@@ -310,7 +310,13 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                 <QuestionsTab tender={tender} questions={questions} onQuestionsChange={setQuestions} documents={documents} />
               )}
               {activeTab === 'sections' && (
-                <SectionsTab tender={tender} sections={sections} onSectionsChange={setSections} documents={documents} />
+                <SectionsTab
+                  tender={tender}
+                  sections={sections}
+                  onSectionsChange={setSections}
+                  documents={documents}
+                  onTenderUpdate={(updates) => setTender((prev: any) => ({ ...prev, ...updates }))}
+                />
               )}
               {activeTab === 'timeline' && (
                 <TimelineTab tender={tender} activities={activities} notes={initialNotes} onActivitiesChange={setActivities} userMap={userMap} />

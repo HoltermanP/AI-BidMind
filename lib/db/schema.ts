@@ -44,6 +44,10 @@ export const tenders = pgTable('tenders', {
   analysisReportHtml: text('analysis_report_html'),
   analysisReportStatus: analysisStatusEnum('analysis_report_status').default('pending'),
   analysisReportGeneratedAt: timestamp('analysis_report_generated_at'),
+  /** Review van de aanbieding (Review Agent): HTML-rapport, veilig gesanitized */
+  reviewReportHtml: text('review_report_html'),
+  reviewReportStatus: analysisStatusEnum('review_report_status').default('pending'),
+  reviewReportGeneratedAt: timestamp('review_report_generated_at'),
   notesCount: integer('notes_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

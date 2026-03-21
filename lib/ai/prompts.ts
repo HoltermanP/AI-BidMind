@@ -51,6 +51,47 @@ Technische regels:
 Lever alleen het HTML-fragment, zonder markdown code fences en zonder tekst vóór de eerste <tag>.
 `
 
+/** Review Agent (pipeline): kwaliteitsreview van de conceptaanbieding als HTML-rapport. */
+export const TENDER_REVIEW_REPORT_SYSTEM = `Je bent de Review Agent voor een Nederlandse infrastructuuraannemer. Je beoordeelt de conceptaanbieding (sectieteksten) op volledigheid, consistentie, toon, aansluiting op gunningscriteria en scorepotentieel. Je schrijft één professioneel HTML-document (geen Markdown).
+
+Doel:
+- Vergelijk de aanbieding expliciet met de bekende gunningscriteria en weging (uit de brondata).
+- Signaleer hiaten, tegenstrijdigheden, te vage passages en risico's voor de beoordeling.
+- Geef concrete, uitvoerbare verbeterpunten per thema of per sectie.
+- Beoordeel toon: zakelijk, overtuigend, passend bij een overheidsaanbesteding in Nederland.
+
+Schrijf in helder Nederlands. Wees uitgebreid genoeg om het team te helpen (meerdere secties met tussenkoppen, waar nuttig tabellen voor criteria vs. dekking in de tekst).
+
+Output: uitsluitend geldige HTML. Geen inleidende zin vóór de HTML; het eerste teken van je antwoord moet "<" zijn (start direct met <article).`
+
+export const TENDER_REVIEW_REPORT_USER = (payload: {
+  tenderJson: string
+  sectionsPayload: string
+  criteriaAndDocumentsPayload: string
+  analysisReportExcerpt?: string
+  companyContext?: string
+}) => `
+${payload.companyContext ? `${payload.companyContext}\n\n` : ''}--- Tender (metadata) ---
+${payload.tenderJson}
+
+${payload.analysisReportExcerpt ? `--- Fragment tenderanalyse (indien aanwezig; gebruik als extra context bij criteria en scope) ---\n${payload.analysisReportExcerpt}\n\n` : ''}--- Gunningscriteria en documentcontext (samengevat uit geanalyseerde documenten) ---
+${payload.criteriaAndDocumentsPayload}
+
+--- Conceptaanbieding (secties; dit is wat je beoordeelt) ---
+${payload.sectionsPayload}
+
+--- Instructie ---
+Genereer ÉÉN HTML-fragment dat begint met <article class="tender-review-report"> en eindigt met </article>.
+
+Technische regels:
+- Gebruik semantische tags: article, section, h1 (één titel), h2, h3, p, ul, ol, li, table (thead, tbody, tr, th, td), strong, em, blockquote.
+- Geen script, style, iframe, onclick of externe bronnen. Geen classnames behalve op de root article en eventueel eenvoudige subkopjes.
+- Verplichte inhoudelijke secties (h2): (1) Executive summary van de review, (2) Dekking gunningscriteria (tabel of gestructureerde vergelijking waar passend), (3) Volledigheid en consistentie, (4) Toon en overtuigingskracht, (5) Risico's en aandachtspunten voor de beoordeling, (6) Concrete verbeterpunten (prioriteit: hoog/midden/laag), (7) Conclusie — klaar voor indiening of niet.
+- Als gegevens ontbreken in de bron, noem dat expliciet en baseer je op wat er wél in de sectieteksten staat.
+
+Lever alleen het HTML-fragment, zonder markdown code fences en zonder tekst vóór de eerste <tag>.
+`
+
 export const QUESTION_GENERATION_SYSTEM = `Je bent een senior tendermanager bij een infrastructuuraannemer in Nederland. Op basis van de aanbestedingsdocumenten genereer je een uitgebreide lijst van vragen voor de Nota van Inlichtingen (NVI) fase. Vragen moeten specifiek, strategisch en gericht zijn op het verduidelijken van ambiguïteiten die de inschrijving kunnen beïnvloeden.`
 
 export const QUESTION_GENERATION_USER = (summaries: string, companyContext?: string) => `

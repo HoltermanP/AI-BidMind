@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import Button from '@/components/ui/Button'
@@ -26,6 +26,7 @@ interface Props {
   sections: Section[]
   onSectionsChange: (s: Section[]) => void
   documents: any[]
+  onTenderUpdate: (updates: Record<string, unknown>) => void
 }
 
 const SECTION_TYPES = [
@@ -51,8 +52,14 @@ const STATUS_LABELS: Record<string, string> = {
   approved: 'Goedgekeurd',
 }
 
-export default function SectionsTab({ tender, sections, onSectionsChange, documents }: Props) {
+/** Minimale tekstlengte voor review (gelijk aan API). */
+const REVIEW_MIN_CHARS = 50
+
+export default function SectionsTab({ tender, sections, onSectionsChange, documents, onTenderUpdate }: Props) {
   const { toast } = useToast()
+  const reviewPrintRef = useRef<HTMLDivElement>(null)
+  const [reviewPdfLoading, setReviewPdfLoading] = useState(false)
+  const [reviewGenerating, setReviewGenerating] = useState(false)
   const [editingSection, setEditingSection] = useState<Section | null>(null)
   const [editorContent, setEditorContent] = useState('')
   const [generating, setGenerating] = useState(false)
@@ -64,7 +71,87 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
   const approved = sections.filter((s) => s.status === 'approved').length
   const total = sections.length
 
+  const reviewStatus = tender.reviewReportStatus as string | undefined
+  const reviewHtml = tender.reviewReportHtml as string | undefined
+  const reviewGeneratedAt = tender.reviewReportGeneratedAt
+  const reviewBusy = reviewGenerating || reviewStatus === 'processing'
   const isDirty = editingSection ? editorContent !== (editingSection.content || '') : false
+  const hasReviewableContent =
+    sections.some((s) => (s.content || '').trim().length >= REVIEW_MIN_CHARS) ||
+    (Boolean(editingSection) && editorContent.trim().length >= REVIEW_MIN_CHARS)
+  const hasAnalyzedDocuments = documents.some((d) => d.analysisStatus === 'done' && Boolean(d.analysisJson))
+
+  const handleReviewGenerate = async () => {
+    setReviewGenerating(true)
+    try {
+      if (editingSection && isDirty) {
+        const wordCount = editorContent.trim().split(/\s+/).filter(Boolean).length
+        const saveRes = await fetch(`/api/tenders/${tender.id}/sections/${editingSection.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            content: editorContent,
+            wordCount,
+            status: 'draft',
+            lastEditedAt: new Date(),
+          }),
+        })
+        if (!saveRes.ok) {
+          toast('Opslaan vóór review mislukt', 'error')
+          return
+        }
+        const updated = await saveRes.json()
+        onSectionsChange(sections.map((s) => (s.id === editingSection.id ? updated : s)))
+        setEditingSection(updated)
+      }
+
+      const res = await fetch(`/api/tenders/${tender.id}/review-report`, { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const sync = await fetch(`/api/tenders/${tender.id}`)
+        if (sync.ok) onTenderUpdate(await sync.json())
+        toast(body.error || 'Genereren mislukt', 'error')
+        return
+      }
+      onTenderUpdate(body)
+      toast('Reviewrapport gereed', 'success')
+    } catch {
+      const sync = await fetch(`/api/tenders/${tender.id}`)
+      if (sync.ok) onTenderUpdate(await sync.json())
+      toast('Genereren mislukt', 'error')
+    } finally {
+      setReviewGenerating(false)
+    }
+  }
+
+  const handleReviewDownloadPdf = async () => {
+    const el = reviewPrintRef.current
+    if (!el) return
+    setReviewPdfLoading(true)
+    try {
+      const { default: html2pdf } = await import('html2pdf.js')
+      const base =
+        (tender.referenceNumber || tender.title || 'review-rapport')
+          .toString()
+          .replace(/[^\w\d\-_.\s]+/g, '_')
+          .trim()
+          .slice(0, 80) || 'review-rapport'
+      await html2pdf()
+        .set({
+          margin: [14, 12, 14, 12],
+          filename: `${base}-review.pdf`,
+          image: { type: 'jpeg', quality: 0.95 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        })
+        .from(el)
+        .save()
+    } catch {
+      toast('PDF-export mislukt', 'error')
+    } finally {
+      setReviewPdfLoading(false)
+    }
+  }
 
   const addSection = async () => {
     try {
@@ -194,83 +281,182 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
     }
   }
 
-  if (editingSection) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 0 }}>
-        {/* Editor header */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
-          <button
-            onClick={() => setEditingSection(null)}
-            style={{ background: 'none', border: 'none', color: 'var(--slate-blue)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'IBM Plex Sans, sans-serif' }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
-            Terug naar secties
-          </button>
-          <span style={{ color: '#D1D5DB', fontSize: 13 }}>/</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{editingSection.title}</span>
-          <Badge
-            value={STATUS_LABELS[editingSection.status || 'empty']}
-            bg={STATUS_COLORS[editingSection.status || 'empty']?.bg}
-            color={STATUS_COLORS[editingSection.status || 'empty']?.text}
-          />
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <Button
-              size="sm"
-              variant="secondary"
-              loading={generating}
-              onClick={generateContent}
-              icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>}
-            >
-              Genereer met AI
-            </Button>
-            <Button size="sm" variant="amber" loading={saving} onClick={saveSection} disabled={!isDirty}>
-              Opslaan
-            </Button>
-            {editingSection.status === 'draft' && (
-              <Button size="sm" variant="secondary" onClick={() => changeStatus(editingSection.id, 'in_review')}>
-                Naar review
-              </Button>
-            )}
-            {editingSection.status === 'in_review' && (
-              <Button size="sm" variant="secondary" style={{ background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' }} onClick={() => changeStatus(editingSection.id, 'approved')}>
-                ✓ Goedkeuren
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Alleen HTML-weergave */}
-        <div style={{ flex: 1, minHeight: 0, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', background: 'white', display: 'flex', flexDirection: 'column' }}>
-          <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: '#F1F5F9', fontSize: 11, fontWeight: 600, color: 'var(--navy)' }}>
-            Weergave
-          </div>
-          <div
-            className="section-content-preview"
-            style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', minHeight: 200 }}
-          >
-            {editorContent.trim() ? (
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                components={{
-                  img: ({ src, alt, ...props }) =>
-                    typeof src === 'string' && src.trim() !== '' ? (
-                      <img src={src} alt={alt ?? ''} {...props} />
-                    ) : null
-                }}
-              >
-                {editorContent}
-              </ReactMarkdown>
-            ) : (
-              <span style={{ color: 'var(--muted)', fontSize: 13 }}>Tekst verschijnt hier opgemaakt.</span>
-            )}
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, maxWidth: '100%' }}>
+      {/* Reviewrapport — zelfde patroon als tab Tenderanalyse */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, maxWidth: '100%' }}>
+        <div
+          className="tender-tab-actions"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            flexWrap: 'wrap',
+            padding: '14px 0',
+            marginBottom: 12,
+            borderBottom: '1px solid #E5E7EB',
+            minWidth: 0,
+          }}
+        >
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>
+            Reviewrapport
+          </span>
+          <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1, minWidth: 120 }}>
+            Kwaliteitsreview (Review Agent) van de sectieteksten t.o.v. criteria — HTML en PDF.
+          </span>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleReviewGenerate}
+            disabled={reviewBusy || !hasReviewableContent}
+          >
+            {reviewBusy ? 'Bezig…' : reviewHtml ? 'Review opnieuw genereren' : 'Review genereren'}
+          </Button>
+          {reviewHtml && (
+            <Button size="sm" onClick={handleReviewDownloadPdf} disabled={reviewPdfLoading || reviewBusy}>
+              {reviewPdfLoading ? 'PDF…' : 'Download PDF'}
+            </Button>
+          )}
+        </div>
+
+        {reviewStatus === 'failed' && !reviewBusy && (
+          <div
+            style={{
+              padding: '12px 14px',
+              borderRadius: 6,
+              background: 'var(--error-bg)',
+              color: 'var(--error)',
+              fontSize: 13,
+              marginBottom: 12,
+            }}
+          >
+            De laatste generatie is mislukt. Controleer de AI-configuratie en probeer opnieuw.
+          </div>
+        )}
+
+        {reviewBusy && (
+          <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+            De Review Agent werkt het rapport bij. Dit kan een minuut duren…
+          </p>
+        )}
+
+        {!reviewHtml && !reviewBusy && reviewStatus !== 'processing' && (
+          <div
+            style={{
+              padding: 24,
+              border: '1px dashed var(--border)',
+              borderRadius: 8,
+              background: '#fafafa',
+              fontSize: 13,
+              color: 'var(--text-secondary)',
+              lineHeight: 1.5,
+              marginBottom: 16,
+            }}
+          >
+            {hasReviewableContent ? (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>Nog geen reviewrapport.</strong>{' '}
+                {hasAnalyzedDocuments
+                  ? 'Klik op Review genereren voor een beoordeling op volledigheid, criteria en verbeterpunten.'
+                  : 'Tip: analyseer documenten onder Documenten (en optioneel de tenderanalyse) voor sterkere koppeling aan gunningscriteria; je kunt nu al genereren op basis van de sectieteksten.'}
+              </>
+            ) : (
+              <>
+                <strong style={{ color: 'var(--text-primary)' }}>Eerst inhoud in secties.</strong> Vul of genereer
+                tekst in minstens één sectie (minimaal {REVIEW_MIN_CHARS} tekens opgeslagen of in de editor) voordat je
+                review start.
+              </>
+            )}
+          </div>
+        )}
+
+        {reviewHtml && (
+          <div style={{ marginTop: 4, marginBottom: 8 }}>
+            {reviewGeneratedAt && (
+              <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+                Laatst gegenereerd: {formatDateTime(reviewGeneratedAt)}
+              </p>
+            )}
+            <div ref={reviewPrintRef} className="tender-review-print-root">
+              <div dangerouslySetInnerHTML={{ __html: reviewHtml }} />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {editingSection ? (
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: 0, gap: 0 }}>
+          {/* Editor header */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => setEditingSection(null)}
+              style={{ background: 'none', border: 'none', color: 'var(--slate-blue)', cursor: 'pointer', fontSize: 13, display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'IBM Plex Sans, sans-serif' }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              Terug naar secties
+            </button>
+            <span style={{ color: '#D1D5DB', fontSize: 13 }}>/</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{editingSection.title}</span>
+            <Badge
+              value={STATUS_LABELS[editingSection.status || 'empty']}
+              bg={STATUS_COLORS[editingSection.status || 'empty']?.bg}
+              color={STATUS_COLORS[editingSection.status || 'empty']?.text}
+            />
+            <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                size="sm"
+                variant="secondary"
+                loading={generating}
+                onClick={generateContent}
+                icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>}
+              >
+                Genereer met AI
+              </Button>
+              <Button size="sm" variant="amber" loading={saving} onClick={saveSection} disabled={!isDirty}>
+                Opslaan
+              </Button>
+              {editingSection.status === 'draft' && (
+                <Button size="sm" variant="secondary" onClick={() => changeStatus(editingSection.id, 'in_review')}>
+                  Naar review
+                </Button>
+              )}
+              {editingSection.status === 'in_review' && (
+                <Button size="sm" variant="secondary" style={{ background: '#D1FAE5', color: '#065F46', border: '1px solid #A7F3D0' }} onClick={() => changeStatus(editingSection.id, 'approved')}>
+                  ✓ Goedkeuren
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <div style={{ flex: 1, minHeight: 0, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', background: 'white', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: '#F1F5F9', fontSize: 11, fontWeight: 600, color: 'var(--navy)' }}>
+              Weergave
+            </div>
+            <div
+              className="section-content-preview"
+              style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', minHeight: 200 }}
+            >
+              {editorContent.trim() ? (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    img: ({ src, alt, ...props }) =>
+                      typeof src === 'string' && src.trim() !== '' ? (
+                        <img src={src} alt={alt ?? ''} {...props} />
+                      ) : null
+                  }}
+                >
+                  {editorContent}
+                </ReactMarkdown>
+              ) : (
+                <span style={{ color: 'var(--muted)', fontSize: 13 }}>Tekst verschijnt hier opgemaakt.</span>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
       {/* Actiebalk –zelfde opmaak als NVI Vragen en Documenten */}
       <div
         className="tender-tab-actions"
@@ -405,6 +591,8 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
     </div>
   )

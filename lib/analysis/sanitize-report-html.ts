@@ -64,3 +64,29 @@ export function sanitizeAndWrapTenderAnalysisHtml(rawModelOutput: string): strin
   if (/^<article\b/i.test(trimmed)) return trimmed
   return `<article class="tender-analysis-report">${trimmed}</article>`
 }
+
+export function sanitizeAndWrapTenderReviewHtml(rawModelOutput: string): string {
+  const extracted = extractTenderAnalysisHtml(rawModelOutput)
+  const cleaned = sanitizeHtml(extracted, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {
+      a: ['href', 'target', 'rel'],
+      '*': ['class'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    transformTags: {
+      a: (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          rel: 'noopener noreferrer',
+          target: '_blank',
+        },
+      }),
+    },
+  })
+
+  const trimmed = cleaned.trim()
+  if (/^<article\b/i.test(trimmed)) return trimmed
+  return `<article class="tender-review-report">${trimmed}</article>`
+}
