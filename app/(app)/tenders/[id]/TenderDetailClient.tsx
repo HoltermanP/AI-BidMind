@@ -8,7 +8,9 @@ import Badge from '@/components/ui/Badge'
 import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/Toast'
-import { formatDate, formatDateTime, formatCurrency, getDaysUntil, STATUS_LABELS } from '@/lib/utils/format'
+import { formatDate, formatDateTime, getDaysUntil } from '@/lib/utils/format'
+import TenderPipelineStrip from '@/components/tenders/TenderPipelineStrip'
+import { getTabForPipelineStatus, TENDER_TAB_PIPELINE_HINT, type TenderDetailTabId } from '@/lib/tender/pipeline'
 import OverviewTab from './tabs/OverviewTab'
 import AnalysisTab from './tabs/AnalysisTab'
 import DocumentsTab from './tabs/DocumentsTab'
@@ -27,7 +29,7 @@ interface Props {
   allUsers: any[]
 }
 
-const TABS = [
+const TABS: { id: TenderDetailTabId; label: string }[] = [
   { id: 'overview', label: 'Overzicht' },
   { id: 'documents', label: 'Documenten' },
   { id: 'analysis', label: 'Tenderanalyse' },
@@ -36,10 +38,8 @@ const TABS = [
   { id: 'timeline', label: 'Tijdlijn' },
 ]
 
-const STATUS_OPTIONS = ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost', 'withdrawn']
-
 export default function TenderDetailClient({ tender: initialTender, documents: initialDocs, questions: initialQuestions, sections: initialSections, activities: initialActivities, notes: initialNotes, userMap, allUsers }: Props) {
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState<TenderDetailTabId>(() => getTabForPipelineStatus(initialTender.status))
   const [tabIndicator, setTabIndicator] = useState<{ left: number; width: number }>({ left: 0, width: 0 })
   const tabRefs = useRef<Record<string, HTMLButtonElement | null>>({})
   const [tender, setTender] = useState(initialTender)
@@ -68,6 +68,10 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
   }, [activeTab])
 
   const patchTender = async (updates: Record<string, any>) => {
+    const prevTab = activeTab
+    if (updates.status !== undefined) {
+      setActiveTab(getTabForPipelineStatus(String(updates.status)))
+    }
     setTender({ ...tender, ...updates })
     try {
       const res = await fetch(`/api/tenders/${tender.id}`, {
@@ -79,6 +83,9 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
     } catch {
       toast('Opslaan mislukt', 'error')
       setTender(initialTender)
+      if (updates.status !== undefined) {
+        setActiveTab(prevTab)
+      }
     }
   }
 
@@ -121,7 +128,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
             Tenders
           </Link>
 
-          <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 2 }}>
               <h1 style={{
                 fontSize: 20,
@@ -140,27 +147,9 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                 </span>
               )}
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-              {/* Status dropdown */}
-              <select
-                value={tender.status}
-                onChange={(e) => patchTender({ status: e.target.value })}
-                style={{
-                  padding: '3px 8px',
-                  border: '1px solid var(--border)',
-                  borderRadius: 20,
-                  fontSize: 11,
-                  fontWeight: 600,
-                  fontFamily: 'IBM Plex Sans, sans-serif',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  background: 'white',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {STATUS_OPTIONS.map((s) => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
-              </select>
-
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, width: '100%' }}>
+              <TenderPipelineStrip status={tender.status} onStatusChange={(next) => patchTender({ status: next })} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {/* Go/No-Go */}
               <div style={{ display: 'flex', gap: 2 }}>
                 {(['pending', 'go', 'no_go'] as const).map((val) => {
@@ -234,6 +223,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                   {tender.winProbability || 0}%
                 </span>
               </div>
+              </div>
             </div>
           </div>
         </div>
@@ -245,6 +235,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
               key={tab.id}
               ref={(el) => { tabRefs.current[tab.id] = el }}
               onClick={() => setActiveTab(tab.id)}
+              title={TENDER_TAB_PIPELINE_HINT[tab.id]}
               style={{
                 padding: '6px 14px',
                 background: 'none',

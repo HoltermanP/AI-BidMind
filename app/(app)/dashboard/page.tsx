@@ -6,28 +6,7 @@ import Avatar from '@/components/ui/Avatar'
 import Link from 'next/link'
 import PipelineAgentCards from '@/components/dashboard/PipelineAgentCards'
 import PipelineMobileStack from '@/components/dashboard/PipelineMobileStack'
-
-const PIPELINE_AGENT_LABELS: Record<string, string> = {
-  new: 'Intake Agent',
-  qualifying: 'Screening Agent',
-  analyzing: 'Analyse Agent',
-  writing: 'Schrijf Agent',
-  review: 'Review Agent',
-  submitted: 'Monitor Agent',
-  won: 'Overdracht Agent',
-  lost: 'Evaluatie Agent',
-}
-
-const PIPELINE_AGENT_DESCRIPTIONS: Record<string, string> = {
-  new: 'Scant binnenkomende tender automatisch: scope, sector, deadline, contractvorm (UAV-GC?), geschiktheid voor jullie profiel. Output: go/no-go advies + samenvatting.',
-  qualifying: 'Vergelijkt tendereisen met jullie competenties, referenties en bezetting. Signaleert risico\'s (te kort, te complex, buiten werkgebied). Output: kwalificatiescore + aanbeveling.',
-  analyzing: 'Diept de tender uit: technische eisen, gunningscriteria, weging, valkuilen in het bestek. Voor infra-tenders ook: contractrisico\'s, UAV-GC verplichtingen, systems engineering eisen. Output: gestructureerde analyse + aandachtspunten.',
-  writing: 'Genereert concept-antwoorden op kwalitatieve vragen op basis van eerdere inschrijvingen, referentieprojecten en bedrijfsprofiel. Output: eerste concept per gunningscriterium.',
-  review: 'Checkt de inschrijving op volledigheid, consistentie, toon en scorepotentieel. Vergelijkt met gunningscriteria. Output: reviewrapport met verbeterpunten.',
-  submitted: 'Houdt deadlines bij, signaleert verzoeken om aanvullende info, bewaakt de beslistermijn. Output: alerts + statusupdate.',
-  won: 'Extraheert contractverplichtingen, KPI\'s en mijlpalen uit de winnende inschrijving. Bereidt de projectstart voor. Output: contractsamenvatting voor projectteam.',
-  lost: 'Analyseert de afwijzing (als feedback beschikbaar), vergelijkt met gewonnen concurrenten, leert voor de volgende inschrijving. Output: verbeterpunten voor het volgende tender.',
-}
+import { PIPELINE_AGENT_LABELS, PIPELINE_AGENT_DESCRIPTIONS } from '@/lib/tender/pipeline'
 
 export const dynamic = 'force-dynamic'
 

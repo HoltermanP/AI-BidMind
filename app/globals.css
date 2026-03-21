@@ -113,6 +113,219 @@ input, textarea, select {
 
 /* Tender detail: .tender-tab-scroll = scrollcontainer, .tender-tab-actions = actiebalk onder tabs (opmaak inline in componenten) */
 
+/* Tender detail: pipeline (horizontaal, duidelijke twee regels — geen samengeplakte tekst) */
+.tender-pipeline-section {
+  width: 100%;
+  min-width: 0;
+}
+
+.tender-pipeline-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.tender-pipeline-section-head-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.tender-pipeline-section-title {
+  margin: 0;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+.tender-pipeline-section-hint {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.6875rem;
+  color: var(--text-secondary);
+  line-height: 1.45;
+  max-width: 42rem;
+}
+
+.tender-pipeline-section-active {
+  margin: 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 6px;
+}
+
+.tender-pipeline-section-active-label {
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 0.625rem;
+}
+
+.tender-pipeline-section-active-phase {
+  font-weight: 700;
+  color: var(--navy);
+}
+
+.tender-pipeline-section-active-sep {
+  color: var(--border);
+  user-select: none;
+}
+
+.tender-pipeline-section-active-agent {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.tender-pipeline-strip-card {
+  background: linear-gradient(180deg, #fafbfc 0%, #f4f6f8 100%);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 10px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.tender-pipeline-strip-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+  margin: 0 -2px;
+  padding: 2px 4px 6px;
+}
+
+.tender-pipeline-strip-track {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  min-width: min-content;
+  width: max-content;
+}
+
+.tender-pipeline-strip-segment {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tender-pipeline-strip-chevron {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #cbd5e1;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.tender-pipeline-strip-step {
+  display: grid;
+  grid-template-rows: auto auto;
+  row-gap: 4px;
+  align-content: start;
+  justify-items: start;
+  min-width: 5.75rem;
+  max-width: 8.5rem;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-family: 'IBM Plex Sans', sans-serif;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s,
+    box-shadow 0.15s,
+    transform 0.12s;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  box-sizing: border-box;
+  /* Forceren van twee regels (ook als <button>-defaults anders zijn) */
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.tender-pipeline-strip-step:hover:not(:disabled) {
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.tender-pipeline-strip-step:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.tender-pipeline-strip-step:focus-visible {
+  outline: 2px solid var(--slate-blue);
+  outline-offset: 2px;
+}
+
+.tender-pipeline-strip-step--active {
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.1);
+}
+
+.tender-pipeline-strip-step--muted {
+  opacity: 0.65;
+}
+
+.tender-pipeline-strip-step-phase {
+  display: block;
+  width: 100%;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: var(--navy);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.tender-pipeline-strip-step--active .tender-pipeline-strip-step-phase {
+  color: var(--step-accent, var(--navy));
+}
+
+.tender-pipeline-strip-step-agent {
+  display: block;
+  width: 100%;
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  white-space: normal;
+  word-break: break-word;
+}
+
+.tender-pipeline-strip-step--withdrawn {
+  border: 1px dashed #cbd5e1 !important;
+  background: #fff !important;
+}
+
+.tender-pipeline-strip-step--withdrawn:hover {
+  border-color: #94a3b8 !important;
+}
+
+.tender-pipeline-strip-step--active-withdrawn {
+  border-style: solid !important;
+  border-color: #64748b !important;
+  background: #f1f5f9 !important;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+}
+
+.tender-pipeline-strip-step--active-withdrawn .tender-pipeline-strip-step-phase {
+  color: var(--text-primary);
+}
+
 /* Utility classes */
 .font-syne { font-family: 'Syne', sans-serif; }
 .font-plex { font-family: 'IBM Plex Sans', sans-serif; }
@@ -1006,6 +1219,16 @@ input, textarea, select {
   .tender-detail-header-inner {
     padding-left: 16px !important;
     padding-right: 16px !important;
+  }
+
+  .tender-pipeline-strip-card {
+    padding: 10px 8px;
+    border-radius: 10px;
+  }
+
+  .tender-pipeline-strip-step {
+    min-width: 5.25rem;
+    padding: 8px 10px;
   }
 
   /* Tenderlijst: kaarten */
