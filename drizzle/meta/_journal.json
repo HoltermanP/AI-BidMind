@@ -43,6 +43,13 @@
       "when": 1774182719770,
       "tag": "0005_handover_report_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774190000000,
+      "tag": "0006_handover_gamma_columns",
+      "breakpoints": true
     }
   ]
 }

@@ -55,6 +55,12 @@ export const tenders = pgTable('tenders', {
   handoverPresentationHtml: text('handover_presentation_html'),
   handoverReportStatus: analysisStatusEnum('handover_report_status').default('pending'),
   handoverReportGeneratedAt: timestamp('handover_report_generated_at'),
+  /** Optionele Gamma API: presentatie + export (.pptx) via public-api.gamma.app */
+  handoverGammaGenerationId: text('handover_gamma_generation_id'),
+  handoverGammaStatus: text('handover_gamma_status'),
+  handoverGammaUrl: text('handover_gamma_url'),
+  handoverGammaExportUrl: text('handover_gamma_export_url'),
+  handoverGammaError: text('handover_gamma_error'),
   notesCount: integer('notes_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),

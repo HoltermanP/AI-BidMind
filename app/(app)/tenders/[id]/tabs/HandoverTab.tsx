@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Button from '@/components/ui/Button'
 import { useToast } from '@/components/ui/Toast'
 import { formatDateTime } from '@/lib/utils/format'
@@ -12,6 +12,11 @@ interface TenderHandoverSlice {
   handoverPresentationHtml?: string | null
   handoverReportStatus?: string | null
   handoverReportGeneratedAt?: Date | string | null
+  handoverGammaGenerationId?: string | null
+  handoverGammaStatus?: string | null
+  handoverGammaUrl?: string | null
+  handoverGammaExportUrl?: string | null
+  handoverGammaError?: string | null
 }
 
 interface Props {
@@ -21,10 +26,14 @@ interface Props {
 
 export default function HandoverTab({ tender, onTenderUpdate }: Props) {
   const { toast } = useToast()
+  const onTenderUpdateRef = useRef(onTenderUpdate)
+  onTenderUpdateRef.current = onTenderUpdate
   const printRef = useRef<HTMLDivElement>(null)
   const [pdfLoading, setPdfLoading] = useState(false)
   const [pptxLoading, setPptxLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [alsoGamma, setAlsoGamma] = useState(false)
+  const [gammaStarting, setGammaStarting] = useState(false)
   const [panel, setPanel] = useState<'plan' | 'presentation'>('plan')
 
   const status = tender.handoverReportStatus as string | undefined
@@ -32,6 +41,65 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
   const presentationHtml = tender.handoverPresentationHtml as string | undefined
   const generatedAt = tender.handoverReportGeneratedAt
   const hasOutput = Boolean(planHtml && presentationHtml)
+  const gammaStatus = tender.handoverGammaStatus as string | undefined
+  const gammaPending = gammaStatus === 'pending'
+  const gammaDone = gammaStatus === 'completed'
+  const gammaFailed = gammaStatus === 'failed'
+
+  const startGammaPresentation = async () => {
+    setGammaStarting(true)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/handover-gamma`, { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast(body.error || 'Gamma starten mislukt', 'error')
+        return
+      }
+      onTenderUpdateRef.current(body)
+      toast('Gamma-presentatie gestart; dit kan enkele minuten duren…', 'success')
+    } catch {
+      toast('Gamma starten mislukt', 'error')
+    } finally {
+      setGammaStarting(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!gammaPending || !tender.id) return
+    let cancelled = false
+    let attempts = 0
+    const maxAttempts = 120
+
+    const poll = async () => {
+      if (cancelled) return
+      attempts += 1
+      if (attempts > maxAttempts) {
+        toast('Gamma: time-out bij status. Vernieuw de pagina of probeer opnieuw.', 'error')
+        return
+      }
+      try {
+        const res = await fetch(`/api/tenders/${tender.id}/handover-gamma`)
+        const body = await res.json().catch(() => ({}))
+        if (!res.ok) return
+        if (body.tender) onTenderUpdateRef.current(body.tender)
+        const g = body.gamma as { status?: string; error?: string } | undefined
+        if (g?.status === 'completed') {
+          toast('Gamma-presentatie gereed', 'success')
+        } else if (g?.status === 'failed') {
+          toast(g.error || 'Gamma-generatie mislukt', 'error')
+        }
+      } catch {
+        /* volgende poll */
+      }
+    }
+
+    const id = window.setInterval(poll, 5000)
+    void poll()
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [gammaPending, tender.id, toast])
 
   const handleGenerate = async () => {
     setGenerating(true)
@@ -46,6 +114,9 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
       }
       onTenderUpdate(body)
       toast('Overdrachtsrapport gereed', 'success')
+      if (alsoGamma) {
+        await startGammaPresentation()
+      }
     } catch {
       const sync = await fetch(`/api/tenders/${tender.id}`)
       if (sync.ok) onTenderUpdate(await sync.json())
@@ -108,7 +179,7 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
     }
   }
 
-  const busy = generating || status === 'processing'
+  const busy = generating || status === 'processing' || gammaStarting
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 0, minWidth: 0, maxWidth: '100%' }}>
@@ -129,15 +200,43 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
           Overdracht
         </span>
         <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1, minWidth: 120 }}>
-          Overdracht Agent: implementatieplan en een PowerPoint-presentatie (exporteerbaar als .pptx).
+          Overdracht Agent: implementatieplan en presentatie. Optioneel: Gamma API voor een rijkere PPTX (beeld, lay-out).
         </span>
+        <label
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 6,
+            fontSize: 12,
+            color: 'var(--text-secondary)',
+            cursor: busy ? 'not-allowed' : 'pointer',
+            userSelect: 'none',
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={alsoGamma}
+            disabled={busy}
+            onChange={(e) => setAlsoGamma(e.target.checked)}
+          />
+          Ook Gamma (PPTX)
+        </label>
         <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={busy}>
           {busy ? 'Bezig…' : hasOutput ? 'Opnieuw genereren' : 'Plan & presentatie genereren'}
         </Button>
         {hasOutput && (
           <>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={startGammaPresentation}
+              disabled={busy || gammaPending}
+              title="Start een aparte Gamma-generatie op basis van de huidige presentatie-inhoud"
+            >
+              {gammaPending ? 'Gamma bezig…' : gammaStarting ? 'Gamma…' : 'Alleen Gamma starten'}
+            </Button>
             <Button size="sm" variant="secondary" onClick={handleDownloadPptx} disabled={pptxLoading || busy}>
-              {pptxLoading ? 'PowerPoint…' : 'Download PowerPoint (.pptx)'}
+              {pptxLoading ? 'PowerPoint…' : 'Download PowerPoint (lokaal .pptx)'}
             </Button>
             <Button size="sm" onClick={handleDownloadPdf} disabled={pdfLoading || busy}>
               {pdfLoading ? 'PDF…' : 'Download PDF'}
@@ -145,6 +244,64 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
           </>
         )}
       </div>
+
+      {gammaPending && (
+        <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 12 }}>
+          Gamma verwerkt je presentatie. Dit kan enkele minuten duren; de status wordt automatisch ververst.
+        </p>
+      )}
+
+      {gammaDone && tender.handoverGammaExportUrl && (
+        <div
+          style={{
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+            gap: 10,
+            marginBottom: 16,
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: '#ECFDF5',
+            border: '1px solid #A7F3D0',
+            fontSize: 13,
+          }}
+        >
+          <span style={{ fontWeight: 600, color: 'var(--navy)' }}>Gamma-presentatie gereed</span>
+          {tender.handoverGammaUrl ? (
+            <a
+              href={tender.handoverGammaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: 'var(--slate-blue)', textDecoration: 'underline' }}
+            >
+              Open in Gamma
+            </a>
+          ) : null}
+          <a
+            href={tender.handoverGammaExportUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: 'var(--slate-blue)', textDecoration: 'underline' }}
+          >
+            Download PPTX (Gamma)
+          </a>
+        </div>
+      )}
+
+      {gammaFailed && tender.handoverGammaError && (
+        <div
+          style={{
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: 'var(--error-bg)',
+            color: 'var(--error)',
+            fontSize: 13,
+            marginBottom: 16,
+          }}
+        >
+          Gamma: {tender.handoverGammaError}
+        </div>
+      )}
 
       {status === 'failed' && !busy && (
         <div
