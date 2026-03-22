@@ -164,11 +164,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     if (estimatedWinProbability !== null) {
       setPayload.winProbabilityEstimated = estimatedWinProbability
-      const hadNoPriorEstimate = tender.winProbabilityEstimated == null
-      const winStillDefault = (tender.winProbability ?? 0) === 0
-      if (hadNoPriorEstimate && winStillDefault) {
-        setPayload.winProbability = estimatedWinProbability
-      }
+      setPayload.winProbability = estimatedWinProbability
     }
 
     const [updated] = await db.update(tenders).set(setPayload).where(eq(tenders.id, id)).returning()
