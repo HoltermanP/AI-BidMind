@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { useState, useRef, type MouseEvent } from 'react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
 import { formatDateTime } from '@/lib/utils/format'
+import SectionRichTextEditor from '@/components/tenders/SectionRichTextEditor'
 
 interface Section {
   id: string
@@ -67,6 +66,9 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
   const [downloading, setDownloading] = useState(false)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newSection, setNewSection] = useState({ title: '', sectionType: 'plan_van_aanpak' })
+  const [editorTitle, setEditorTitle] = useState('')
+  const [editorSectionType, setEditorSectionType] = useState('eigen_sectie')
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const approved = sections.filter((s) => s.status === 'approved').length
   const total = sections.length
@@ -75,7 +77,11 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
   const reviewHtml = tender.reviewReportHtml as string | undefined
   const reviewGeneratedAt = tender.reviewReportGeneratedAt
   const reviewBusy = reviewGenerating || reviewStatus === 'processing'
-  const isDirty = editingSection ? editorContent !== (editingSection.content || '') : false
+  const isDirty = editingSection
+    ? editorContent !== (editingSection.content || '') ||
+      editorTitle !== (editingSection.title || '') ||
+      editorSectionType !== (editingSection.sectionType || 'eigen_sectie')
+    : false
   const hasReviewableContent =
     sections.some((s) => (s.content || '').trim().length >= REVIEW_MIN_CHARS) ||
     (Boolean(editingSection) && editorContent.trim().length >= REVIEW_MIN_CHARS)
@@ -90,10 +96,11 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            title: editorTitle.trim() || null,
+            sectionType: editorSectionType,
             content: editorContent,
             wordCount,
             status: 'draft',
-            lastEditedAt: new Date(),
           }),
         })
         if (!saveRes.ok) {
@@ -174,6 +181,37 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
   const openEditor = (section: Section) => {
     setEditingSection(section)
     setEditorContent(section.content || '')
+    setEditorTitle(section.title || '')
+    setEditorSectionType(section.sectionType || 'eigen_sectie')
+  }
+
+  const deleteSection = async (section: Section, e?: MouseEvent) => {
+    e?.stopPropagation()
+    const label = section.title?.trim() || 'deze sectie'
+    if (
+      !confirm(
+        `Weet je zeker dat je “${label}” wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`
+      )
+    ) {
+      return
+    }
+    setDeletingId(section.id)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/sections/${section.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      onSectionsChange(sections.filter((s) => s.id !== section.id))
+      if (editingSection?.id === section.id) {
+        setEditingSection(null)
+        setEditorContent('')
+        setEditorTitle('')
+        setEditorSectionType('eigen_sectie')
+      }
+      toast('Sectie verwijderd', 'success')
+    } catch {
+      toast('Verwijderen mislukt', 'error')
+    } finally {
+      setDeletingId(null)
+    }
   }
 
   const saveSection = async () => {
@@ -184,7 +222,13 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
       const res = await fetch(`/api/tenders/${tender.id}/sections/${editingSection.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: editorContent, wordCount, status: 'draft', lastEditedAt: new Date() }),
+        body: JSON.stringify({
+          title: editorTitle.trim() || null,
+          sectionType: editorSectionType,
+          content: editorContent,
+          wordCount,
+          status: 'draft',
+        }),
       })
       if (!res.ok) throw new Error()
       const updated = await res.json()
@@ -205,7 +249,7 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
       const res = await fetch(`/api/tenders/${tender.id}/sections/${editingSection.id}/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sectionType: editingSection.sectionType }),
+        body: JSON.stringify({ sectionType: editorSectionType }),
       })
 
       if (!res.ok) throw new Error()
@@ -396,14 +440,21 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Terug naar secties
             </button>
-            <span style={{ color: '#D1D5DB', fontSize: 13 }}>/</span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--navy)' }}>{editingSection.title}</span>
             <Badge
               value={STATUS_LABELS[editingSection.status || 'empty']}
               bg={STATUS_COLORS[editingSection.status || 'empty']?.bg}
               color={STATUS_COLORS[editingSection.status || 'empty']?.text}
             />
             <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <Button
+                size="sm"
+                variant="danger"
+                loading={deletingId === editingSection.id}
+                onClick={() => void deleteSection(editingSection)}
+                icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>}
+              >
+                Verwijderen
+              </Button>
               <Button
                 size="sm"
                 variant="secondary"
@@ -429,31 +480,57 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             </div>
           </div>
 
-          <div style={{ flex: 1, minHeight: 0, border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden', background: 'white', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ padding: '10px 14px', borderBottom: '1px solid var(--border)', background: '#F1F5F9', fontSize: 11, fontWeight: 600, color: 'var(--navy)' }}>
-              Weergave
+          <div className="sections-editor-meta-grid">
+            <div style={{ minWidth: 0 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Titel</label>
+              <input
+                value={editorTitle}
+                onChange={(e) => setEditorTitle(e.target.value)}
+                placeholder="Sectietitel"
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  fontSize: 13,
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                }}
+              />
             </div>
-            <div
-              className="section-content-preview"
-              style={{ flex: 1, padding: '18px 20px', overflowY: 'auto', minHeight: 200 }}
-            >
-              {editorContent.trim() ? (
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    img: ({ src, alt, ...props }) =>
-                      typeof src === 'string' && src.trim() !== '' ? (
-                        <img src={src} alt={alt ?? ''} {...props} />
-                      ) : null
-                  }}
-                >
-                  {editorContent}
-                </ReactMarkdown>
-              ) : (
-                <span style={{ color: 'var(--muted)', fontSize: 13 }}>Tekst verschijnt hier opgemaakt.</span>
-              )}
+            <div style={{ minWidth: 0 }}>
+              <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: '#374151', marginBottom: 4 }}>Type</label>
+              <select
+                value={editorSectionType}
+                onChange={(e) => setEditorSectionType(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px 10px',
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  fontSize: 13,
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  outline: 'none',
+                  cursor: 'pointer',
+                  boxSizing: 'border-box',
+                }}
+              >
+                {SECTION_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>
+                    {t.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
+
+          <SectionRichTextEditor
+            markdown={editorContent}
+            onMarkdownChange={setEditorContent}
+            sectionId={editingSection.id}
+            generating={generating}
+          />
         </div>
       ) : (
         <>
@@ -585,9 +662,20 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
                   {section.lastEditedAt && <span>Bewerkt {formatDateTime(section.lastEditedAt)}</span>}
                 </div>
               </div>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6"/>
-              </svg>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <Button
+                  size="sm"
+                  variant="danger"
+                  loading={deletingId === section.id}
+                  onClick={(e) => void deleteSection(section, e)}
+                  icon={<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>}
+                >
+                  Verwijderen
+                </Button>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <polyline points="9 18 15 12 9 6"/>
+                </svg>
+              </div>
             </div>
           ))}
         </div>

@@ -1155,6 +1155,44 @@ input, textarea, select {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
+.sections-editor-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.sections-editor-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* TipTap (aanbieding sectie): zelfde typografie als voorbeeld, focus zonder rand */
+.section-rich-text-scroll .tiptap {
+  outline: none;
+}
+.section-rich-text-prose.ProseMirror {
+  min-height: 200px;
+  outline: none;
+}
+.section-rich-text-scroll .tiptap p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: var(--muted);
+  pointer-events: none;
+  height: 0;
+}
+
+@media (max-width: 900px) {
+  .sections-editor-meta-grid,
+  .sections-editor-split {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ——— Mobiel (≤767px) ——— */
 @media (max-width: 767px) {
   .dashboard-page {

@@ -17,7 +17,7 @@ export async function PATCH(
     const body = await request.json()
 
     // Alleen server bepaalt lastEditedAt; negeer waarde uit body (voorkomt typefouten met ISO-string)
-    const allowed = ['title', 'content', 'status', 'wordCount', 'lastEditedBy', 'aiGenerated']
+    const allowed = ['title', 'content', 'status', 'wordCount', 'lastEditedBy', 'aiGenerated', 'sectionType']
     const updates: Record<string, unknown> = { lastEditedBy: userId, lastEditedAt: new Date() }
     for (const key of allowed) {
       if (key in body && body[key] !== undefined) updates[key] = body[key]
@@ -45,6 +45,30 @@ export async function PATCH(
     return NextResponse.json(updated)
   } catch (error) {
     console.error('[PATCH /api/tenders/.../sections/[sId]]', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; sId: string }> }
+) {
+  try {
+    const { userId } = await auth()
+    if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!db) return NextResponse.json({ error: 'Database not configured' }, { status: 503 })
+
+    const { id, sId } = await params
+
+    const [row] = await db.select().from(tenderSections).where(eq(tenderSections.id, sId))
+    if (!row || row.tenderId !== id) {
+      return NextResponse.json({ error: 'Sectie niet gevonden' }, { status: 404 })
+    }
+
+    await db.delete(tenderSections).where(eq(tenderSections.id, sId))
+    return NextResponse.json({ ok: true })
+  } catch (error) {
+    console.error('[DELETE /api/tenders/.../sections/[sId]]', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
