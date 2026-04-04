@@ -27,9 +27,13 @@ export interface TenderBriefForIntake {
   procedureType: string | null
   cpvCodes: string[] | null
   tenderDescription: string | null
+  /** Bron: TenderNed, Negometrix, handmatig, e-mail, overig */
+  source: string | null
 }
 
-const SYSTEM_PROMPT = `Je bent een intake-assistent voor Nederlandse aanbestedingen.
+const SYSTEM_PROMPT = `Je bent een intake-assistent (Intake Agent — signalering) voor Nederlandse aanbestedingen.
+Tenders kunnen binnenkomen via TenderNed, Negometrix, handmatige invoer, e-mail of andere kanalen; de bron staat bij de tender als "source".
+
 Op basis van de bedrijfscontext en de tendergegevens beoordeel je hoe goed deze opdracht past bij het bedrijf (geschiktheid om mee te doen / te tenderen).
 
 Antwoord uitsluitend met een JSON-object met exact deze keys:
@@ -61,6 +65,7 @@ function clampScore(n: unknown): number {
 function buildTenderBriefText(brief: TenderBriefForIntake): string {
   const lines: string[] = []
   lines.push(`Titel: ${brief.title}`)
+  if (brief.source) lines.push(`Bron (source): ${brief.source}`)
   if (brief.referenceNumber) lines.push(`Referentie/kenmerk: ${brief.referenceNumber}`)
   if (brief.contractingAuthority) lines.push(`Aanbestedende dienst: ${brief.contractingAuthority}`)
   if (brief.procedureType) lines.push(`Procedure/type: ${brief.procedureType}`)
@@ -144,6 +149,7 @@ export function tenderBriefFromTenderRow(row: {
   procedureType: string | null
   cpvCodes: string[] | null
   tenderDescription: string | null
+  source?: string | null
 }): TenderBriefForIntake {
   return {
     title: row.title,
@@ -152,6 +158,7 @@ export function tenderBriefFromTenderRow(row: {
     procedureType: row.procedureType,
     cpvCodes: row.cpvCodes,
     tenderDescription: row.tenderDescription,
+    source: row.source ?? null,
   }
 }
 

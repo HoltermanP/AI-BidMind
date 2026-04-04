@@ -116,6 +116,31 @@ export function sanitizeAndWrapHandoverPlanHtml(rawModelOutput: string): string 
   return `<article class="tender-handover-plan">${trimmed}</article>`
 }
 
+export function sanitizeAndWrapTenderRiskReportHtml(rawModelOutput: string): string {
+  const extracted = extractTenderAnalysisHtml(rawModelOutput)
+  const cleaned = sanitizeHtml(extracted, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: {
+      a: ['href', 'target', 'rel'],
+      '*': ['class'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto'],
+    transformTags: {
+      a: (tagName, attribs) => ({
+        tagName,
+        attribs: {
+          ...attribs,
+          rel: 'noopener noreferrer',
+          target: '_blank',
+        },
+      }),
+    },
+  })
+  const trimmed = cleaned.trim()
+  if (/^<article\b/i.test(trimmed)) return trimmed
+  return `<article class="tender-risk-report">${trimmed}</article>`
+}
+
 export function sanitizeAndWrapHandoverPresentationHtml(rawModelOutput: string): string {
   const extracted = extractTenderAnalysisHtml(rawModelOutput)
   const cleaned = sanitizeHtml(extracted, {

@@ -11,10 +11,26 @@ function clampInt(n: number, min: number, max: number): number {
 export function parseTenderAnalysisReportResponse(raw: string): {
   html: string
   estimatedWinProbability: number | null
+  analysisCore: Record<string, unknown> | null
 } {
   const trimmed = raw.trim()
 
-  const tryParseObject = (obj: unknown): { html: string; estimatedWinProbability: number | null } | null => {
+  const normalizeCore = (rawCore: unknown): Record<string, unknown> | null => {
+    if (!rawCore || typeof rawCore !== 'object') return null
+    const c = rawCore as Record<string, unknown>
+    return {
+      bestek_samenvatting: c.bestek_samenvatting ?? c.bestekSamenvatting,
+      gunningscriteria: c.gunningscriteria ?? c.gunningsCriteria,
+      emvi_gewichten: c.emvi_gewichten ?? c.emviGewichten,
+      selectie_eisen: c.selectie_eisen ?? c.selectieEisen,
+    }
+  }
+
+  const tryParseObject = (obj: unknown): {
+    html: string
+    estimatedWinProbability: number | null
+    analysisCore: Record<string, unknown> | null
+  } | null => {
     if (!obj || typeof obj !== 'object') return null
     const rec = obj as Record<string, unknown>
     const htmlField = rec.html
@@ -27,7 +43,8 @@ export function parseTenderAnalysisReportResponse(raw: string): {
       const n = Number(rawEst.replace(',', '.').replace('%', '').trim())
       if (Number.isFinite(n)) estimatedWinProbability = clampInt(n, 0, 100)
     }
-    return { html: htmlField, estimatedWinProbability }
+    const coreRaw = rec.output_a ?? rec.analysis_core ?? rec.analysisCore
+    return { html: htmlField, estimatedWinProbability, analysisCore: normalizeCore(coreRaw) }
   }
 
   const jsonFence = /^```(?:json)?\s*\n([\s\S]*?)```/m.exec(trimmed)
@@ -57,5 +74,6 @@ export function parseTenderAnalysisReportResponse(raw: string): {
   return {
     html: extractTenderAnalysisHtml(trimmed),
     estimatedWinProbability: null,
+    analysisCore: null,
   }
 }

@@ -10,9 +10,9 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variants = {
   primary: {
-    background: 'var(--navy)',
+    background: 'var(--slate-blue)',
     color: 'white',
-    border: '1px solid var(--navy)',
+    border: '1px solid var(--slate-blue)',
   },
   amber: {
     background: 'var(--amber)',
@@ -63,7 +63,7 @@ export default function Button({
         ...variantStyle,
         ...sizeStyle,
         borderRadius: 4,
-        fontFamily: 'IBM Plex Sans, sans-serif',
+        fontFamily: 'var(--font-body)',
         fontWeight: 600,
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         display: 'inline-flex',

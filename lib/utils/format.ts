@@ -62,12 +62,13 @@ export function getDaysUntil(date: Date | string | null): number | null {
 }
 
 export const STATUS_LABELS: Record<string, string> = {
-  new: 'Nieuw',
+  new: 'Signalering',
   qualifying: 'Kwalificatie',
-  analyzing: 'Analyse',
-  writing: 'Schrijven',
-  review: 'Review',
-  submitted: 'Ingediend',
+  analyzing: 'Documentanalyse & risico',
+  inlichtingen: 'Inlichtingen',
+  writing: 'Inschrijving samenstellen',
+  review: 'Review & indieningscheck',
+  submitted: 'Ingediend / wacht op beslissing',
   won: 'Gewonnen',
   lost: 'Verloren',
   withdrawn: 'Ingetrokken',
@@ -77,6 +78,7 @@ export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   new: { bg: '#E8F0FE', text: '#1A56DB' },
   qualifying: { bg: '#FEF3C7', text: '#92400E' },
   analyzing: { bg: '#E0F2FE', text: '#075985' },
+  inlichtingen: { bg: '#EDE9FE', text: '#5B21B6' },
   writing: { bg: '#F3E8FF', text: '#6B21A8' },
   review: { bg: '#FFF7ED', text: '#C2410C' },
   submitted: { bg: '#ECFDF5', text: '#065F46' },

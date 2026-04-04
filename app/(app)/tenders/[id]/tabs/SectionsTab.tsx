@@ -343,7 +343,7 @@ export default function SectionsTab({ tender, sections, onSectionsChange, docume
             minWidth: 0,
           }}
         >
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>
             Reviewrapport
           </span>
           <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1, minWidth: 120 }}>

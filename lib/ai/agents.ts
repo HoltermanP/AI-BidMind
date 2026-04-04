@@ -12,11 +12,13 @@ export type AIPlatform = 'openai' | 'anthropic'
 export type AgentId =
   | 'document_analysis'
   | 'tender_analysis_report'
+  | 'tender_risk_report'
   | 'tender_review_report'
   | 'handover_report'
   | 'section_writing'
   | 'question_generation'
   | 'intake_suitability'
+  | 'screening_qualification'
   | 'lessons_learned'
 
 export interface AgentConfig {
@@ -49,6 +51,11 @@ export const AGENT_CONFIG: Record<AgentId, AgentConfig> = {
     model: 'claude-sonnet-4-20250514',
     maxTokens: 16384,
   },
+  tender_risk_report: {
+    platform: 'anthropic',
+    model: 'claude-sonnet-4-20250514',
+    maxTokens: 16384,
+  },
   tender_review_report: {
     platform: 'anthropic',
     model: 'claude-sonnet-4-20250514',
@@ -74,6 +81,11 @@ export const AGENT_CONFIG: Record<AgentId, AgentConfig> = {
     model: 'gpt-4o-mini',
     /** Kort JSON-antwoord; lagere limiet = iets minder outputkosten */
     maxTokens: 512,
+  },
+  screening_qualification: {
+    platform: 'openai',
+    model: 'gpt-4o-mini',
+    maxTokens: 2048,
   },
   lessons_learned: {
     platform: 'anthropic',

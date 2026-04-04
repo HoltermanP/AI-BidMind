@@ -12,7 +12,12 @@ interface TenderAnalysisSlice {
   analysisReportHtml?: string | null
   analysisReportStatus?: string | null
   analysisReportGeneratedAt?: Date | string | null
+  analysisCoreJson?: Record<string, unknown> | null
   winProbabilityEstimated?: number | null
+  riskReportHtml?: string | null
+  riskReportStatus?: string | null
+  riskReportGeneratedAt?: Date | string | null
+  contractType?: string | null
 }
 
 interface DocumentAnalysisRow {
@@ -33,6 +38,8 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
   const [pdfLoading, setPdfLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [riskGenerating, setRiskGenerating] = useState(false)
+  const [riskDeleting, setRiskDeleting] = useState(false)
 
   const status = tender.analysisReportStatus as string | undefined
   const html = tender.analysisReportHtml as string | undefined
@@ -57,6 +64,51 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
       toast('Genereren mislukt', 'error')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const riskStatus = tender.riskReportStatus as string | undefined
+  const riskHtml = tender.riskReportHtml as string | undefined
+  const riskGeneratedAt = tender.riskReportGeneratedAt
+
+  const handleRiskGenerate = async () => {
+    setRiskGenerating(true)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/risk-report`, { method: 'POST' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        const sync = await fetch(`/api/tenders/${tender.id}`)
+        if (sync.ok) onTenderUpdate(await sync.json())
+        toast(body.error || 'Risicorapport mislukt', 'error')
+        return
+      }
+      onTenderUpdate(body)
+      toast('Risico Agent: rapport gereed', 'success')
+    } catch {
+      const sync = await fetch(`/api/tenders/${tender.id}`)
+      if (sync.ok) onTenderUpdate(await sync.json())
+      toast('Risicorapport mislukt', 'error')
+    } finally {
+      setRiskGenerating(false)
+    }
+  }
+
+  const handleRiskDelete = async () => {
+    if (!confirm('Risicorapport en bijbehorende risico-items verwijderen?')) return
+    setRiskDeleting(true)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/risk-report`, { method: 'DELETE' })
+      const body = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        toast(body.error || 'Verwijderen mislukt', 'error')
+        return
+      }
+      onTenderUpdate(body)
+      toast('Risicorapport verwijderd', 'success')
+    } catch {
+      toast('Verwijderen mislukt', 'error')
+    } finally {
+      setRiskDeleting(false)
     }
   }
 
@@ -118,6 +170,9 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
   const canDeleteReport =
     !busy && (Boolean(html) || status === 'failed')
 
+  const riskBusy = riskGenerating || riskStatus === 'processing' || riskDeleting
+  const canDeleteRisk = !riskBusy && (Boolean(riskHtml) || riskStatus === 'failed')
+
   /** Zelfde voorwaarde als POST /analysis-report: minstens één document met status done én analysisJson. */
   const hasAnalyzedDocuments = documents.some((d) => d.analysisStatus === 'done' && Boolean(d.analysisJson))
 
@@ -136,7 +191,7 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
           minWidth: 0,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>
           Tenderanalyse
         </span>
         <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1, minWidth: 120 }}>
@@ -161,6 +216,47 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
           </Button>
         )}
       </div>
+
+      <div
+        className="tender-tab-actions"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          padding: '14px 0',
+          marginBottom: 12,
+          borderBottom: '1px solid #E5E7EB',
+          minWidth: 0,
+        }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>
+          Risico Agent
+        </span>
+        <span style={{ fontSize: 12, color: 'var(--text-secondary)', flex: 1, minWidth: 120 }}>
+          Contractvorm (RAW/UAV/UAV-GC), aansprakelijkheid, boetes, meer-/minderwerk — vult ook de risico-items.
+        </span>
+        <Button
+          size="sm"
+          variant="secondary"
+          onClick={handleRiskGenerate}
+          disabled={riskBusy || !hasAnalyzedDocuments}
+        >
+          {riskBusy ? 'Bezig…' : riskHtml ? 'Risico opnieuw' : 'Risicorapport genereren'}
+        </Button>
+        {canDeleteRisk && (
+          <Button size="sm" variant="secondary" onClick={handleRiskDelete} disabled={riskBusy}>
+            {riskDeleting ? 'Verwijderen…' : 'Risico verwijderen'}
+          </Button>
+        )}
+      </div>
+
+      {tender.contractType && tender.contractType !== 'onbekend' && (
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: -8, marginBottom: 12 }}>
+          Contractvorm in dossier:{' '}
+          <strong>{tender.contractType === 'UAV_GC' ? 'UAV-GC' : tender.contractType}</strong>
+        </p>
+      )}
 
       {status === 'failed' && !busy && (
         <div
@@ -224,8 +320,43 @@ export default function AnalysisTab({ tender, documents, onTenderUpdate }: Props
               )}
             </p>
           )}
+          {tender.analysisCoreJson && Object.keys(tender.analysisCoreJson).length > 0 && (
+            <details style={{ marginBottom: 16, fontSize: 12 }}>
+              <summary style={{ cursor: 'pointer', fontWeight: 600, color: 'var(--navy)' }}>
+                Gestructureerde kern (Output A)
+              </summary>
+              <pre
+                style={{
+                  marginTop: 8,
+                  padding: 10,
+                  background: '#f9fafb',
+                  borderRadius: 4,
+                  overflow: 'auto',
+                  maxHeight: 240,
+                }}
+              >
+                {JSON.stringify(tender.analysisCoreJson, null, 2)}
+              </pre>
+            </details>
+          )}
           <div ref={printRef} className="tender-analysis-print-root">
             <div dangerouslySetInnerHTML={{ __html: html }} />
+          </div>
+        </div>
+      )}
+
+      {riskHtml && (
+        <div style={{ marginTop: 28 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
+            Contract- en risicorapport
+          </h3>
+          {riskGeneratedAt && (
+            <p style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>
+              Laatst gegenereerd: {formatDateTime(riskGeneratedAt)}
+            </p>
+          )}
+          <div className="tender-analysis-print-root">
+            <div dangerouslySetInnerHTML={{ __html: riskHtml }} />
           </div>
         </div>
       )}

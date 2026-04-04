@@ -71,6 +71,13 @@
       "when": 1774282536766,
       "tag": "0009_lessons_learned",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1774299175648,
+      "tag": "0010_moaning_blonde_phantom",
+      "breakpoints": true
     }
   ]
 }

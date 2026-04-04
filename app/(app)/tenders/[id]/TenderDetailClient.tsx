@@ -165,7 +165,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 2 }}>
               <h1 style={{
                 fontSize: 20,
-                fontFamily: 'Syne, sans-serif',
+                fontFamily: 'var(--font-heading)',
                 fontWeight: 700,
                 color: 'var(--navy)',
                 lineHeight: 1.2,
@@ -416,7 +416,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                 >
                   <h2
                     style={{
-                      fontFamily: 'Syne, sans-serif',
+                      fontFamily: 'var(--font-heading)',
                       fontSize: 18,
                       fontWeight: 700,
                       color: 'var(--navy)',
@@ -468,6 +468,13 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                   documents={documents}
                   lessons={lessonsLearned}
                   onLessonsChange={setLessonsLearned}
+                  evaluatieDebriefingDraft={tender.evaluatieDebriefingDraft}
+                  evaluatieScoreVergelijkingJson={tender.evaluatieScoreVergelijkingJson}
+                  evaluatieBezwaarCheckJson={tender.evaluatieBezwaarCheckJson}
+                  onEvalComplete={async () => {
+                    const r = await fetch(`/api/tenders/${tender.id}`)
+                    if (r.ok) setTender(await r.json())
+                  }}
                 />
               )}
               {activeTab === 'timeline' && (
@@ -552,7 +559,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                 { label: 'Goedgekeurd', value: approvedSections },
               ].map(({ label, value }) => (
                 <div key={label} style={{ background: '#F9FAFB', borderRadius: 4, padding: '8px 10px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>{value}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>{value}</div>
                   <div style={{ fontSize: 10, color: 'var(--muted)', marginTop: 2 }}>{label}</div>
                 </div>
               ))}

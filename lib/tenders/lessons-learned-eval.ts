@@ -149,6 +149,22 @@ export async function evaluateLessonsFromDocument(params: {
 
   const raw = await runCompletion('lessons_learned', LESSONS_LEARNED_EVAL_SYSTEM, userPrompt, { jsonMode: true })
   const obj = parseAiJsonObject(raw)
+
+  const debrief =
+    typeof obj.debriefing_email_draft === 'string' ? obj.debriefing_email_draft.trim().slice(0, 20000) : null
+  const sv = obj.score_vergelijking
+  const bc = obj.bezwaar_check
+  await db
+    .update(tenders)
+    .set({
+      evaluatieDebriefingDraft: debrief,
+      evaluatieScoreVergelijkingJson:
+        sv && typeof sv === 'object' ? (sv as Record<string, unknown>) : null,
+      evaluatieBezwaarCheckJson: bc && typeof bc === 'object' ? (bc as Record<string, unknown>) : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(tenders.id, params.tenderId))
+
   const items = parseLessonItems(obj)
 
   await db.delete(lessonsLearned).where(

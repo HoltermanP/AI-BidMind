@@ -40,6 +40,11 @@ Schrijf in helder Nederlands, zakelijk en toon. Wees uitgebreid: meerdere pagina
 
 Output: uitsluitend één geldig JSON-object (geen markdown-fences, geen tekst eromheen) met exact deze sleutels:
 - "estimated_win_probability": integer 0–100
+- "output_a": object met vier string-velden (uitgebreid maar compact, elk meerdere alinea's toegestaan):
+  - "bestek_samenvatting"
+  - "gunningscriteria"
+  - "emvi_gewichten"
+  - "selectie_eisen"
 - "html": string met het volledige HTML-fragment (zie gebruikersprompt voor structuur)`
 
 export const TENDER_ANALYSIS_REPORT_USER = (payload: {
@@ -63,6 +68,8 @@ Technische regels voor "html":
 - Verplichte inhoudelijke secties (h2): (1) Executive summary, (2) Scope en opdracht, (3) Technische eisen en specificaties, (4) Gunningscriteria en weging, (5) Contract, UAV-GC en risico's, (6) Planning, deadlines en mijlpalen, (7) NVI en strategische aandachtspunten, (8) Conclusie en advies voor de inschrijving — en (9) kort: toelichting bij de geschatte win-kans (waarom dit percentage past bij de analyse).
 - Zijn gegevens onbekend in de bron, zeg dat expliciet en werk met voorzichtige aannames, noem ze als zodanig.
 
+Het veld "output_a" is de gestructureerde kern (herbruikbaar naast het rapport); het veld "html" bevat het volledige analyse-artikel waarin je deze kern ook inlopend uitwerkt.
+
 Het veld "estimated_win_probability" moet overeenkomen met je inhoudelijke inschatting (niet automatisch 50).
 
 Retourneer alleen het JSON-object, correct ge-escaped binnen de html-string (aanhalingstekens in HTML als &quot; of vermijd ze).
@@ -74,9 +81,14 @@ export const TENDER_REVIEW_REPORT_SYSTEM = `Je bent de Review Agent voor een Ned
 ${AI_PROJECT_NAMING_RULE}
 
 Doel:
-- Vergelijk de aanbieding expliciet met de bekende gunningscriteria en weging (uit de brondata).
+- Vergelijk de aanbieding expliciet met de bekende gunningscriteria en weging (uit de brondata) en met de eisenlijst uit de tenderanalyse (indien beschikbaar).
+- Voer een volledigheidscheck uit t.o.v. die eisenlijst: noem expliciet ontbrekende verplichte onderdelen.
+- EMVI-toets: bevat de tekst meerwaarde-argumenten voor de opdrachtgever, of vooral procesbeschrijving? Geef oordeel en verbeterpunten.
+- Prijs-kwaliteitsbalans: is het beschreven kwaliteitsniveau consistent met eventuele prijs- of kostcontext in de data?
+- Deadline-check: bereken en noem hoeveel uur er (indien deadline bekend) nog zijn tot sluitingstijd van de inschrijving; signaleer tijdsdruk.
 - Signaleer hiaten, tegenstrijdigheden, te vage passages en risico's voor de beoordeling.
 - Geef concrete, uitvoerbare verbeterpunten per thema of per sectie.
+- Als verplichte velden of onderdelen ontbreken: concludeer in een aparte sectie "Indieningsblokkade" dat indienen niet verantwoord is totdat dit is opgelost.
 - Beoordeel toon: zakelijk, overtuigend, passend bij een overheidsaanbesteding in Nederland.
 
 Schrijf in helder Nederlands. Wees uitgebreid genoeg om het team te helpen (meerdere secties met tussenkoppen, waar nuttig tabellen voor criteria vs. dekking in de tekst).
@@ -105,7 +117,7 @@ Genereer ÉÉN HTML-fragment dat begint met <article class="tender-review-report
 Technische regels:
 - Gebruik semantische tags: article, section, h1 (één titel), h2, h3, p, ul, ol, li, table (thead, tbody, tr, th, td), strong, em, blockquote.
 - Geen script, style, iframe, onclick of externe bronnen. Geen classnames behalve op de root article en eventueel eenvoudige subkopjes.
-- Verplichte inhoudelijke secties (h2): (1) Executive summary van de review, (2) Dekking gunningscriteria (tabel of gestructureerde vergelijking waar passend), (3) Volledigheid en consistentie, (4) Toon en overtuigingskracht, (5) Risico's en aandachtspunten voor de beoordeling, (6) Concrete verbeterpunten (prioriteit: hoog/midden/laag), (7) Conclusie — klaar voor indiening of niet.
+- Verplichte inhoudelijke secties (h2): (1) Executive summary van de review, (2) Volledigheid t.o.v. eisenlijst, (3) Dekking gunningscriteria (tabel of gestructureerde vergelijking), (4) EMVI / meerwaarde-toets, (5) Prijs-kwaliteitsbalans, (6) Deadline en tijdsbuffer, (7) Toon en overtuigingskracht, (8) Risico's voor de beoordeling, (9) Concrete verbeterpunten (prioriteit: hoog/midden/laag), (10) Indieningsblokkade (indien van toepassing), (11) Conclusie — klaar voor indiening of niet.
 - Als gegevens ontbreken in de bron, noem dat expliciet en baseer je op wat er wél in de sectieteksten staat.
 
 Lever alleen het HTML-fragment, zonder markdown code fences en zonder tekst vóór de eerste <tag>.
@@ -146,7 +158,7 @@ ${payload.sectionsPayload}
 --- Instructie ---
 Vul het JSON-antwoord in. Gebruik de volledige informatie uit alle meegeleverde sectieblokken. Als er maar één sectie is, baseer je het plan en de presentatie daar volledig op (aangevuld met documentanalyse en infra-praktijk). Bij meerdere secties: synthetiseer consequent over alle secties heen. Vul aan met redelijke infra-projectpraktijk waar gegevens ontbreken en noem aannames expliciet in het plan.
 
-Voor "plan_html": verplichte inhoudelijke secties (h2) minimaal: (1) Executive summary, (2) Scope en uitgangspunten, (3) Tijdlijn en mijlpalen, (4) Organisatie en RACI (hoofdlijnen), (5) Contractuele en leveranciersaandachtspunten, (6) Risico’s en mitigatie, (7) Overdracht checklist naar uitvoering, (8) Volgende 30/60/90 dagen.
+Voor "plan_html": verplichte inhoudelijke secties (h2) minimaal: (1) Executive summary, (2) Scope en uitgangspunten, (3) Tijdlijn en mijlpalen, (4) Organisatie en RACI (hoofdlijnen), (5) Contractuele en leveranciersaandachtspunten, (6) Risico’s en mitigatie, (7) Overdracht checklist naar uitvoering (expliciete punten voor projectteam), (8) Kick-off en interne overdracht — noem concrete velden: voorziene kick-off datum, benoemde projectleider, mijlpalen, eerste betalingstermijn (gebruik placeholders alleen als data ontbreken en label ze duidelijk), (9) Koppeling tenderdossier: welke documenten/secties gaan rechtstreeks mee naar het project, (10) Volgende 30/60/90 dagen.
 
 Voor "presentation_html": compacte slides; geen volledige kopie van het plan; wel de verhaallijn voor stakeholders.
 
@@ -189,6 +201,8 @@ export const SECTION_WRITING_USER = (
 ) => `
 ${companyContext ? `${companyContext}\n\n` : ''}Schrijf een ZEER UITGEBREID document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud expliciet op de beschikbare aanbestedingsdocumenten (samenvattingen, eisen, gunningscriteria en risico's) én op de bedrijfscontext hierboven, zodat de aanbieding maatwerk is voor dit bedrijf.
 
+KRITISCH — schrijfperspectief: formuleer overtuigend wat de OPDRACHTGEVER wint (resultaat, risicoverlaging, kwaliteit, planningsszekerheid, compliance, lifecycle-waarde). Beschrijf niet primair "wat wij doen" als proceslijst, maar welk effect en welke waarde dat voor de opdrachtgever en eindgebruikers oplevert. Het inschrijvers-perspectief mag ter onderbouwing, maar de rode draad is opdrachtgever-waarde.
+
 --- Aanbesteding ---
 Titel (officiële naam; geen formuliercodes als projectnaam): ${tenderTitle}
 Aanbestedende dienst: ${authority}
@@ -222,16 +236,20 @@ Taak:
 - Baseer observaties op de gegeven tekst; verzin geen cijfers of citaten die er niet staan.
 - Als de tekst weinig inhoud heeft, lever dan maximaal 1–2 voorzichtige leerpunten of een lege lessons-array met uitleg is niet nodig — gebruik dan een enkel lesson met category "Overig" die vraagt om volledigere terugkoppeling.
 
-Antwoord uitsluitend met één JSON-object met key "lessons": een array van objecten. Elk object heeft exact deze keys:
-- "title": string, korte kop (max ~80 tekens)
-- "category": één van "Formalia" | "Prijs" | "Kwaliteit" | "Inhoud" | "Organisatie" | "Overig"
-- "observation": string, wat de terugkoppeling concreet zegt of impliceert
-- "recommendation": string, concrete aanbeveling voor de volgende inschrijving
-- "applicability_hint": string of leeg "", wanneer dit leerpunt vooral geldt (bijv. "bij EMVI-procedures", "bij werken onder UAV-GC")
-- "impact": één van "hoog" | "middel" | "laag"
-- "tags": array van korte strings (0–5), bijv. ["EMVI","bijlagen"] of []
+Antwoord uitsluitend met één JSON-object met deze keys:
+- "lessons": array (0–25 items). Elk item heeft exact deze keys:
+  - "title": string, korte kop (max ~80 tekens)
+  - "category": één van "Formalia" | "Prijs" | "Kwaliteit" | "Inhoud" | "Organisatie" | "Overig"
+  - "observation": string, wat de terugkoppeling concreet zegt of impliceert
+  - "recommendation": string, concrete aanbeveling voor de volgende inschrijving
+  - "applicability_hint": string of leeg "", wanneer dit leerpunt vooral geldt (bijv. type opdracht, opdrachtgever, UAV-GC)
+  - "impact": één van "hoog" | "middel" | "laag"
+  - "tags": array van korte strings (0–5)
+- "debriefing_email_draft": string, beleefde standaard e-mail in het Nederlands aan de opdrachtgever om een debriefing/scorevergelijking te vragen (geen verzonnen namen; gebruik placeholders [contact] indien nodig).
+- "score_vergelijking": object met optionele string/number waarden die je uit de tekst kunt halen: "eigen_prijs", "winnaar_prijs", "eigen_kwaliteit", "winnaar_kwaliteit", "totaal_eigen", "totaal_winnaar". Laat weg of null wat niet in de bron staat.
+- "bezwaar_check": object met: "procedurele_fout" (één van "ja","nee","onduidelijk"), "inhoudelijke_fout" (zelfde), "advies": korte string (bv. of bezwaar nuttig te onderzoeken is).
 
-Minimaal 0 en maximaal 25 items in "lessons".`
+Baseer debriefing, scorevergelijking en bezwaar_check alleen op wat in de tekst past; verzin geen scores die er niet staan.`
 
 export const LESSONS_LEARNED_EVAL_USER = (payload: {
   tenderTitle: string
@@ -247,4 +265,67 @@ Referentie/kenmerk: ${payload.referenceNumber ?? '—'}
 
 --- Tekst uit terugkoppelingsdocument (kan ingekort zijn) ---
 ${payload.feedbackDocumentText}
+`
+
+/** Risico Agent — contractvorm en contractuele risico’s (JSON + HTML + gestructureerde items). */
+export const TENDER_RISK_REPORT_SYSTEM = `Je bent de Risico Agent voor een Nederlandse infrastructuuraannemer. Je analyseert aanbestedings- en contractdocumentatie.
+
+${AI_PROJECT_NAMING_RULE}
+
+Taken:
+1) Bepaal contractvorm: één van "RAW", "UAV", "UAV_GC", "onbekend" (in JSON altijd UAV_GC schrijven voor UAV-GC).
+2) Analyseer: aansprakelijkheidsbepalingen, boeteclausules, meer-/minderwerkregeling, onvoorziene omstandigheden.
+3) Bij UAV_GC: neem in het HTML-rapport een duidelijke waarschuwing op dat het ontwerprisico bij de inschrijver kan liggen (UAV-GC).
+4) Lever daarnaast een array "risico_items" met concrete items: type (kort label), omschrijving, ernst "hoog"|"middel"|"laag".
+
+Output: uitsluitend één JSON-object met keys:
+- "contract_type": "RAW"|"UAV"|"UAV_GC"|"onbekend"
+- "html": string, HTML-fragment dat begint met <article class="tender-risk-report"> en eindigt met </article> (zelfde semantische tags als andere rapporten; geen script/style)
+- "risico_items": array van { "type": string, "omschrijving": string, "ernst": "hoog"|"middel"|"laag" } (minimaal 0, maximaal 40)`
+
+export const TENDER_RISK_REPORT_USER = (payload: {
+  tenderJson: string
+  documentsPayload: string
+  companyContext?: string
+}) => `
+${payload.companyContext ? `${payload.companyContext}\n\n` : ''}--- Tender (metadata) ---
+${payload.tenderJson}
+
+--- Geaggregeerde documentanalyses ---
+${payload.documentsPayload}
+
+--- Instructie ---
+Werk contractueel nauwkeurig; bij twijfel contract_type "onbekend" en vermeld aannames in het rapport.
+
+Retourneer alleen het JSON-object.
+`
+
+/** Screening Agent — vijf criteria go/no-go (JSON). */
+export const SCREENING_QUALIFICATION_SYSTEM = `Je bent de Screening Agent (kwalificatiefase) voor Nederlandse aanbestedingen.
+
+${AI_PROJECT_NAMING_RULE}
+
+Beoordeel de tender t.o.v. het bedrijf op vijf criteria. Antwoord uitsluitend met één JSON-object:
+{
+  "kerncompetentie": { "match": boolean, "toelichting": string },
+  "referenties": "ja" | "gedeeltelijk" | "nee",
+  "margeschatting_realistisch": boolean,
+  "margeschatting_toelichting": string,
+  "capaciteit_beschikbaar": boolean,
+  "capaciteit_toelichting": string,
+  "winkans": "hoog" | "middel" | "laag",
+  "winkans_toelichting": string,
+  "advies": "go" | "no_go",
+  "advies_samenvatting": string (max 4 zinnen, onderbouwing per criterium in de kern)
+}
+
+Gebruik alleen gegeven context; wees conservatief bij ontbrekende data.`
+
+export const SCREENING_QUALIFICATION_USER = (payload: {
+  tenderJson: string
+  companyContext?: string
+  intakeSummary?: string | null
+}) => `
+${payload.companyContext ? `${payload.companyContext}\n\n` : ''}${payload.intakeSummary ? `--- Intake (samenvatting geschiktheid) ---\n${payload.intakeSummary}\n\n` : ''}--- Tender (metadata) ---
+${payload.tenderJson}
 `

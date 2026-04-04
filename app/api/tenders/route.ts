@@ -75,6 +75,12 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
 
+    const sourceRaw = body.source
+    const source =
+      sourceRaw === 'tenderned' || sourceRaw === 'negometrix' || sourceRaw === 'handmatig' || sourceRaw === 'overig'
+        ? sourceRaw
+        : 'handmatig'
+
     const [tender] = await db.insert(tenders).values({
       title: body.title,
       referenceNumber: body.referenceNumber || null,
@@ -85,6 +91,7 @@ export async function POST(request: NextRequest) {
       deadlineSubmission: body.deadlineSubmission ? new Date(body.deadlineSubmission) : null,
       tendernetUrl: body.tendernetUrl || null,
       tenderManagerId: userId,
+      source,
       status: 'new',
       goNoGo: 'pending',
       winProbability: 0,

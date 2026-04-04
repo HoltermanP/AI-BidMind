@@ -29,7 +29,11 @@ async function getTenders(searchParams: Record<string, string>) {
   }
 
   if (searchParams.status && searchParams.status !== 'all') {
-    filtered = filtered.filter((t) => t.status === searchParams.status)
+    if (searchParams.status === 'active') {
+      filtered = filtered.filter((t) => !['submitted', 'won', 'lost', 'withdrawn'].includes(t.status || ''))
+    } else {
+      filtered = filtered.filter((t) => t.status === searchParams.status)
+    }
   }
 
   if (searchParams.gonogo && searchParams.gonogo !== 'all') {

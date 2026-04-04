@@ -1,6 +1,32 @@
 import { pgTable, text, uuid, timestamp, decimal, integer, boolean, jsonb, pgEnum, index } from 'drizzle-orm/pg-core'
 
-export const tenderStatusEnum = pgEnum('tender_status', ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost', 'withdrawn'])
+export const tenderStatusEnum = pgEnum('tender_status', [
+  'new',
+  'qualifying',
+  'analyzing',
+  'inlichtingen',
+  'writing',
+  'review',
+  'submitted',
+  'won',
+  'lost',
+  'withdrawn',
+])
+export const tenderSourceEnum = pgEnum('tender_source', ['tenderned', 'negometrix', 'handmatig', 'overig'])
+export const contractTypeEnum = pgEnum('contract_type', ['RAW', 'UAV', 'UAV_GC', 'onbekend'])
+export const riskErnstEnum = pgEnum('risk_ernst', ['hoog', 'middel', 'laag'])
+export const inlichtingenFaseStatusEnum = pgEnum('inlichtingen_fase_status', [
+  'vragen_opstellen',
+  'ingediend',
+  'nvi_ontvangen',
+  'verwerkt',
+])
+export const tenderMonitorStatusEnum = pgEnum('tender_monitor_status', [
+  'ingediend',
+  'alcatel_loopt',
+  'voorlopige_gunning',
+  'definitief',
+])
 export const goNoGoEnum = pgEnum('go_no_go', ['pending', 'go', 'no_go'])
 export const documentTypeEnum = pgEnum('document_type', [
   'aankondiging',
@@ -45,7 +71,13 @@ export const tenders = pgTable('tenders', {
   cpvCodes: text('cpv_codes').array(),
   procedureType: text('procedure_type'),
   status: tenderStatusEnum('status').default('new'),
+  /** Bron van de tender (Intake / signalering) */
+  source: tenderSourceEnum('source').default('handmatig'),
+  /** Contractvorm volgens Risico Agent of handmatig */
+  contractType: contractTypeEnum('contract_type').default('onbekend'),
   goNoGo: goNoGoEnum('go_no_go').default('pending'),
+  /** Screening Agent: scores en onderbouwing per criterium (JSON) */
+  goNoGoScore: jsonb('go_no_go_score').$type<Record<string, unknown> | null>(),
   winProbability: integer('win_probability').default(0),
   /** Geschatte win-kans (0–100) uit de laatste tenderanalyse; handmatige Win% blijft in winProbability */
   winProbabilityEstimated: integer('win_probability_estimated'),
@@ -66,6 +98,12 @@ export const tenders = pgTable('tenders', {
   analysisReportHtml: text('analysis_report_html'),
   analysisReportStatus: analysisStatusEnum('analysis_report_status').default('pending'),
   analysisReportGeneratedAt: timestamp('analysis_report_generated_at'),
+  /** Analyse Agent — gestructureerde kern (bestek, criteria, EMVI, selectie) naast het HTML-rapport */
+  analysisCoreJson: jsonb('analysis_core_json').$type<Record<string, unknown> | null>(),
+  /** Risico Agent: contractanalyse als HTML */
+  riskReportHtml: text('risk_report_html'),
+  riskReportStatus: analysisStatusEnum('risk_report_status').default('pending'),
+  riskReportGeneratedAt: timestamp('risk_report_generated_at'),
   /** Review van de aanbieding (Review Agent): HTML-rapport, veilig gesanitized */
   reviewReportHtml: text('review_report_html'),
   reviewReportStatus: analysisStatusEnum('review_report_status').default('pending'),
@@ -81,6 +119,27 @@ export const tenders = pgTable('tenders', {
   handoverGammaUrl: text('handover_gamma_url'),
   handoverGammaExportUrl: text('handover_gamma_export_url'),
   handoverGammaError: text('handover_gamma_error'),
+  /** Fase Inlichtingen: workflowstatus */
+  inlichtingenFaseStatus: inlichtingenFaseStatusEnum('inlichtingen_fase_status').default('vragen_opstellen'),
+  /** Monitor Agent: na indiening */
+  monitorStatus: tenderMonitorStatusEnum('monitor_status').default('ingediend'),
+  /** Alcatel-termijn (beroep) */
+  alcatelTermijnDatum: timestamp('alcatel_termijn_datum'),
+  nviVerwerkt: boolean('nvi_verwerkt').default(false),
+  kostenRaming: decimal('kosten_raming', { precision: 14, scale: 2 }),
+  margePercentage: decimal('marge_percentage', { precision: 5, scale: 2 }),
+  prijsInschrijving: decimal('prijs_inschrijving', { precision: 14, scale: 2 }),
+  /** UAV-GC: aparte ontwerpkostenraming */
+  ontwerpKostenRaming: decimal('ontwerp_kosten_raming', { precision: 14, scale: 2 }),
+  /** Prijs Agent: waarschuwing abnormaal lage prijs (berekend of handmatig gezet) */
+  prijsAbnormaalLaag: boolean('prijs_abnormaal_laag').default(false),
+  handoverKickoffDate: timestamp('handover_kickoff_date'),
+  handoverProjectLeader: text('handover_project_leader'),
+  handoverMilestones: text('handover_milestones'),
+  handoverFirstPaymentDue: timestamp('handover_first_payment_due'),
+  evaluatieDebriefingDraft: text('evaluatie_debriefing_draft'),
+  evaluatieScoreVergelijkingJson: jsonb('evaluatie_score_vergelijking_json').$type<Record<string, unknown> | null>(),
+  evaluatieBezwaarCheckJson: jsonb('evaluatie_bezwaar_check_json').$type<Record<string, unknown> | null>(),
   notesCount: integer('notes_count').default(0),
   createdAt: timestamp('created_at').defaultNow(),
   updatedAt: timestamp('updated_at').defaultNow(),
@@ -176,6 +235,44 @@ export const lessonsLearned = pgTable(
   (table) => ({
     tenderIdx: index('lessons_learned_tender_idx').on(table.tenderId),
     createdIdx: index('lessons_learned_created_idx').on(table.createdAt),
+  })
+)
+
+/** Inlichtingen-fase: vragen, NvI-antwoorden, impact op inschrijving */
+export const tenderInlichtingen = pgTable(
+  'inlichtingen',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenderId: uuid('tender_id')
+      .references(() => tenders.id, { onDelete: 'cascade' })
+      .notNull(),
+    vraag: text('vraag').notNull(),
+    ingediendOp: timestamp('ingediend_op'),
+    antwoord: text('antwoord'),
+    raaktInschrijving: boolean('raakt_inschrijving').default(false),
+    concurrentieNota: text('concurrentie_nota'),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => ({
+    tenderIdx: index('inlichtingen_tender_idx').on(table.tenderId),
+  })
+)
+
+/** Risico Agent / handmatig: contract- en uitvoeringsrisico’s */
+export const tenderRisicoItems = pgTable(
+  'risico_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    tenderId: uuid('tender_id')
+      .references(() => tenders.id, { onDelete: 'cascade' })
+      .notNull(),
+    type: text('type').notNull(),
+    omschrijving: text('omschrijving').notNull(),
+    ernst: riskErnstEnum('ernst').notNull(),
+    createdAt: timestamp('created_at').defaultNow(),
+  },
+  (table) => ({
+    tenderIdx: index('risico_items_tender_idx').on(table.tenderId),
   })
 )
 

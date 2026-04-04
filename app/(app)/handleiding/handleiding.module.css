@@ -43,12 +43,12 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ffc600;
+  color: #4b8eff;
   margin-bottom: 12px;
 }
 
 .hero h1 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1.75rem, 4vw, 2.25rem);
   font-weight: 800;
   line-height: 1.15;
@@ -74,7 +74,7 @@
 }
 
 .tocTitle {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
   color: var(--navy);
@@ -138,14 +138,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-weight: 800;
   font-size: 15px;
   color: var(--amber);
 }
 
 .section h2 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--navy);
@@ -169,7 +169,7 @@
 }
 
 .card h3 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-primary);
@@ -230,7 +230,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
 }
 
 .callout {

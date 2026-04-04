@@ -1,23 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Van Gelder huisstijl (vangelder.com): donkergrijs, rood, goudgeel */
+/*
+ * AI-Group huisstijl — bron: public/AI-Group-Huisstijlgids_2.pdf
+ * AI Blue #2D6FE8, Blue Light #4B8EFF, Velocity Red #FF4D1C, Deep Black #0A0A0B,
+ * Navy #0D1428, Off-White #F4F6FA, Slate #6B82A8
+ */
 :root {
-  --navy: #58595b;
-  --navy-light: #6d6e70;
-  --navy-mid: #808184;
-  --amber: #e31e24;
-  --amber-light: #ea4b50;
-  --amber-muted: #fde8e9;
-  --slate-blue: #ffc600;
-  --slate-blue-light: #fff4cc;
-  --off-white: #f8fafc;
+  --deep-black: #0a0a0b;
+  --navy-deep: #0d1428;
+  --ai-blue: #2d6fe8;
+  --ai-blue-light: #4b8eff;
+  --velocity-red: #ff4d1c;
+  --off-white: #f4f6fa;
+  --slate-label: #6b82a8;
+  --surface-dark: #111116;
+
+  /* Semantische tokens (bestaande componenten) */
+  --navy: #0d1428;
+  --navy-light: #1a2540;
+  --navy-mid: #2a3348;
+  --amber: #ff4d1c;
+  --amber-light: #ff7a55;
+  --amber-muted: #fff0eb;
+  --slate-blue: #2d6fe8;
+  --slate-blue-light: #e8f1ff;
   --border: #e2e8f0;
-  --muted: #64748b;
-  --text-primary: #1e293b;
+  --muted: #6b82a8;
+  --text-primary: #0a0a0b;
   --text-secondary: #475569;
   --success: #059669;
   --success-bg: #ecfdf5;
@@ -25,8 +38,12 @@
   --error-bg: #fef2f2;
   --warning: #d97706;
   --warning-bg: #fffbeb;
-  --sidebar-text: #94a3b8;
-  --sidebar-text-hover: #e8e8e8;
+  --sidebar-bg: #0a0a0b;
+  --sidebar-text: #6b82a8;
+  --sidebar-text-hover: #f4f6fa;
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+  --font-tagline: 'DM Sans', system-ui, sans-serif;
 }
 
 * {
@@ -52,7 +69,8 @@ html {
 }
 
 body {
-  font-family: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
+  font-weight: 400;
   background: var(--off-white);
   color: var(--text-primary);
   line-height: 1.5;
@@ -60,7 +78,7 @@ body {
 }
 
 h1, h2, h3, h4 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
 }
@@ -70,7 +88,7 @@ code, .mono {
 }
 
 a {
-  color: var(--slate-blue);
+  color: var(--ai-blue);
   text-decoration: none;
 }
 
@@ -79,7 +97,7 @@ a:hover {
 }
 
 input, textarea, select {
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: var(--font-body);
 }
 
 /* Scrollbar */
@@ -137,7 +155,7 @@ input, textarea, select {
 
 .tender-pipeline-section-title {
   margin: 0;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--navy);
@@ -327,7 +345,7 @@ input, textarea, select {
 }
 
 /* Utility classes */
-.font-syne { font-family: 'Syne', sans-serif; }
+.font-syne { font-family: var(--font-heading); }
 .font-plex { font-family: 'IBM Plex Sans', sans-serif; }
 .font-mono { font-family: 'IBM Plex Mono', monospace; }
 
@@ -343,7 +361,7 @@ input, textarea, select {
 }
 
 .dashboard-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--navy);
@@ -413,10 +431,10 @@ input, textarea, select {
   color: #f87171;
 }
 
-/* Grid: 15 kolommen (8 stage + 7 pijlen), 2 rijen (stages+arrows, agents) */
+/* Grid: 17 kolommen (9 stage + 8 pijlen), 2 rijen (stages+arrows, agents) */
 .dashboard-pipeline-grid {
   display: grid;
-  grid-template-columns: minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr) 20px minmax(72px, 1fr);
+  grid-template-columns: minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr) 20px minmax(78px, 1fr);
   grid-template-rows: auto auto;
   gap: 0 0;
   row-gap: 16px;
@@ -428,7 +446,26 @@ input, textarea, select {
 
 .dashboard-pipeline-grid .dashboard-pipeline-stage {
   grid-row: 1;
-  min-height: 72px;
+  min-height: 84px;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 10px 5px;
+  justify-content: center;
+}
+
+/* Lange fasenamen: wrappen binnen de kaart (geen overlap met buurkolommen) */
+.dashboard-pipeline-grid .dashboard-pipeline-label {
+  white-space: normal;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  max-width: 100%;
+  line-height: 1.2;
+  font-size: 0.625rem;
+  letter-spacing: 0.03em;
+  hyphens: auto;
+  -webkit-hyphens: auto;
 }
 
 .dashboard-pipeline-grid .dashboard-pipeline-arrow {
@@ -543,7 +580,7 @@ input, textarea, select {
 }
 
 .dashboard-pipeline-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--navy);
@@ -617,7 +654,7 @@ input, textarea, select {
 }
 
 .dashboard-pipeline-count {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.625rem;
   font-weight: 700;
   color: var(--stage-accent, var(--navy));
@@ -679,7 +716,7 @@ input, textarea, select {
   font-size: 0.8125rem;
   font-weight: 700;
   color: #f8fafc;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* Agent card met hover-tooltip (opmerkingen wolkje) */
@@ -711,12 +748,12 @@ input, textarea, select {
   transform: translateX(-50%) translateY(-8px);
   max-width: min(320px, calc(100vw - 32px));
   padding: 12px 14px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
   font-size: clamp(0.6875rem, 1.8vw, 0.75rem);
   line-height: 1.45;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.12);
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease 0s, visibility 0.2s ease 0s, transform 0.2s ease 0s;
@@ -736,7 +773,7 @@ input, textarea, select {
   top: 100%;
   transform: translateX(-50%);
   border: 8px solid transparent;
-  border-top-color: #1e293b;
+  border-top-color: #f8fafc;
 }
 
 /* Langer wachten tot tooltip verschijnt (ca. 0,6 s) */
@@ -759,12 +796,12 @@ input, textarea, select {
 /* Tooltip via portal (buiten pipeline) — wolkje schaalt mee met tekst, geen scrollbar */
 .dashboard-pipeline-agent-tooltip-portal {
   padding: 12px 14px;
-  background: #1e293b;
-  color: #e2e8f0;
+  background: #f8fafc;
+  color: #0f172a;
   font-size: clamp(0.6875rem, 1.8vw, 0.75rem);
   line-height: 1.45;
   border-radius: 10px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(15, 23, 42, 0.12);
   z-index: 9999;
   pointer-events: none;
   text-align: left;
@@ -781,7 +818,7 @@ input, textarea, select {
   top: 100%;
   transform: translateX(-50%);
   border: 8px solid transparent;
-  border-top-color: #1e293b;
+  border-top-color: #f8fafc;
 }
 
 .dashboard-pipeline-divider {
@@ -803,7 +840,7 @@ input, textarea, select {
 }
 
 .dashboard-pipeline-stat-value {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.3125rem;
   font-weight: 700;
   color: var(--navy);
@@ -857,7 +894,7 @@ input, textarea, select {
 
 .dashboard-kpi-value {
   display: block;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.375rem;
   font-weight: 700;
   color: var(--navy);
@@ -890,7 +927,7 @@ input, textarea, select {
 }
 
 .dashboard-card-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--navy);
@@ -1045,7 +1082,7 @@ input, textarea, select {
   margin-bottom: 0;
 }
 .section-content-preview h1 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--navy);
@@ -1054,7 +1091,7 @@ input, textarea, select {
   border-bottom: 1px solid var(--border);
 }
 .section-content-preview h2 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.25rem;
   font-weight: 700;
   color: var(--navy);
@@ -1063,14 +1100,14 @@ input, textarea, select {
   border-bottom: 1px solid rgba(88, 89, 91, 0.15);
 }
 .section-content-preview h3 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.0625rem;
   font-weight: 700;
   color: var(--navy);
   margin: 1.2rem 0 0.6rem;
 }
 .section-content-preview h4 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--navy);
@@ -1358,7 +1395,7 @@ article.tender-review-report {
 
 article.tender-analysis-report h1,
 article.tender-review-report h1 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--navy);
@@ -1368,7 +1405,7 @@ article.tender-review-report h1 {
 
 article.tender-analysis-report h2,
 article.tender-review-report h2 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--navy);
@@ -1379,7 +1416,7 @@ article.tender-review-report h2 {
 
 article.tender-analysis-report h3,
 article.tender-review-report h3 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -1426,7 +1463,7 @@ article.tender-analysis-report th,
 article.tender-review-report th {
   background: #f8fafc;
   font-weight: 600;
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 12px;
 }
 
@@ -1482,7 +1519,7 @@ article.tender-analysis-report.tender-nvi-report .tender-nvi-question-card:last-
 }
 
 article.tender-analysis-report.tender-nvi-report .tender-nvi-question-card h3 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--navy);
@@ -1608,7 +1645,7 @@ article.tender-handover-plan > :last-child {
 }
 
 article.tender-handover-presentation h1 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.75rem;
   font-weight: 700;
   color: var(--navy);
@@ -1617,7 +1654,7 @@ article.tender-handover-presentation h1 {
 }
 
 article.tender-handover-presentation h2 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 700;
   color: var(--navy);
@@ -1627,7 +1664,7 @@ article.tender-handover-presentation h2 {
 }
 
 article.tender-handover-presentation h3 {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -1712,7 +1749,7 @@ article.tender-handover-presentation section.handover-slide h3 {
 }
 
 .tender-handover-pdf-cover-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.35rem;
   font-weight: 700;
   color: var(--navy);
@@ -1736,7 +1773,7 @@ article.tender-handover-presentation section.handover-slide h3 {
 }
 
 .tender-handover-pdf-section-title {
-  font-family: 'Syne', sans-serif;
+  font-family: var(--font-heading);
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--navy);

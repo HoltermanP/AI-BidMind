@@ -5,7 +5,7 @@ import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
-import { formatDateTime } from '@/lib/utils/format'
+import { formatDateTime, formatDate, getDaysUntil } from '@/lib/utils/format'
 
 interface Activity {
   id: string
@@ -96,11 +96,45 @@ export default function TimelineTab({ tender, activities, notes, onActivitiesCha
           borderBottom: '1px solid #E5E7EB',
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>Tijdlijn</span>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Tijdlijn</span>
       </div>
+      {(tender.alcatelTermijnDatum || tender.monitorStatus) && (
+        <div
+          style={{
+            padding: '12px 14px',
+            borderRadius: 6,
+            background: 'var(--off-white)',
+            border: '1px solid var(--border)',
+            fontSize: 13,
+            lineHeight: 1.5,
+          }}
+        >
+          <strong style={{ color: 'var(--navy)' }}>Monitor</strong>
+          {tender.monitorStatus && (
+            <span style={{ color: 'var(--text-secondary)', marginLeft: 8 }}>
+              Status: {String(tender.monitorStatus).replace(/_/g, ' ')}
+            </span>
+          )}
+          {tender.alcatelTermijnDatum && (() => {
+            const d = getDaysUntil(tender.alcatelTermijnDatum)
+            const urgent = d !== null && d < 0
+            return (
+              <div style={{ marginTop: 6, color: urgent ? 'var(--error)' : 'var(--text-primary)' }}>
+                Alcatel-termijn: {formatDate(tender.alcatelTermijnDatum)}
+                {d !== null && (
+                  <span style={{ marginLeft: 8 }}>
+                    {d < 0 ? `${Math.abs(d)} dagen verstreken` : d === 0 ? 'Vandaag' : `Nog ${d} dagen`}
+                  </span>
+                )}
+                {urgent && <span style={{ marginLeft: 8, fontWeight: 600 }}>Controleer beroep / vervolg</span>}
+              </div>
+            )
+          })()}
+        </div>
+      )}
       {/* Add note */}
       <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 20 }}>
-        <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>
+        <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 14 }}>
           Notitie toevoegen
         </h3>
         <div style={{ display: 'flex', gap: 10, marginBottom: 10 }}>
@@ -152,7 +186,7 @@ export default function TimelineTab({ tender, activities, notes, onActivitiesCha
       {notes.length > 0 && (
         <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
           <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--off-white)' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>Notities</span>
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Notities</span>
           </div>
           {notes.map((note, i) => {
             const author = note.authorId ? userMap[note.authorId] : null
@@ -192,7 +226,7 @@ export default function TimelineTab({ tender, activities, notes, onActivitiesCha
       {/* Activity timeline */}
       <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
         <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--off-white)' }}>
-          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>Activiteitslog</span>
+          <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Activiteitslog</span>
         </div>
         {activities.length === 0 ? (
           <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: 13 }}>

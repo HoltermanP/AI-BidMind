@@ -64,7 +64,7 @@ export default function KalenderClient({ tenders }: Props) {
     <div className="app-page-padding">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
             Kalender
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{upcomingEvents.length} aankomende deadlines</p>
@@ -135,7 +135,7 @@ export default function KalenderClient({ tenders }: Props) {
                     onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.boxShadow = 'none' }}
                   >
                     <div style={{ width: 52, textAlign: 'center', flexShrink: 0 }}>
-                      <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: isUrgent ? '#DC2626' : 'var(--navy)' }}>
+                      <div style={{ fontSize: 22, fontWeight: 700, fontFamily: 'var(--font-heading)', color: isUrgent ? '#DC2626' : 'var(--navy)' }}>
                         {daysLeft === 0 ? '!' : daysLeft}
                       </div>
                       <div style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'IBM Plex Mono, monospace' }}>
@@ -170,7 +170,7 @@ export default function KalenderClient({ tenders }: Props) {
               onClick={() => setCurrentMonth(new Date(year, month - 1, 1))}
               style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 4, padding: '4px 10px', cursor: 'pointer', color: 'var(--text-primary)' }}
             >‹</button>
-            <span style={{ fontSize: 16, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)' }}>
+            <span style={{ fontSize: 16, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)' }}>
               {monthNames[month]} {year}
             </span>
             <button

@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import dynamic from 'next/dynamic'
@@ -133,7 +132,7 @@ export default function Sidebar() {
         }
         transition={{ duration: 0.2, ease: 'easeInOut' }}
         style={{
-          background: 'var(--navy)',
+          background: 'var(--sidebar-bg)',
           borderRight: '1px solid var(--navy-mid)',
           display: 'flex',
           flexDirection: 'column',
@@ -146,7 +145,7 @@ export default function Sidebar() {
           zIndex: isMobile ? 50 : 40,
         }}
       >
-      {/* Logo's: Van Gelder + BidMind volledig + slogan */}
+      {/* Logo: AI-Group (huisstijlgids) + BidMind + slogan */}
       <div style={{
         padding: navCollapsed ? '16px 10px' : '14px 12px 16px',
         borderBottom: '1px solid var(--navy-mid)',
@@ -156,7 +155,6 @@ export default function Sidebar() {
         gap: navCollapsed ? 0 : 12,
         minHeight: navCollapsed ? 64 : undefined,
       }}>
-        {/* Van Gelder logo (donkere variant – past op sidebar) */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -164,13 +162,12 @@ export default function Sidebar() {
           flexShrink: 0,
           overflow: 'hidden',
         }}>
-          <Image
-            src="/van-gelder-logo.png"
-            alt="Van Gelder"
+          <img
+            src="/ai-group-logo-sidebar.svg"
+            alt="AI-Group.nl"
             width={navCollapsed ? 36 : 196}
             height={navCollapsed ? 36 : 44}
             style={{ objectFit: 'contain', width: navCollapsed ? 36 : '100%', maxWidth: 196, height: 'auto' }}
-            priority
           />
         </div>
         <AnimatePresence>
@@ -199,8 +196,9 @@ export default function Sidebar() {
                 transition={{ duration: 0.15 }}
                 style={{
                   margin: 0,
-                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  fontFamily: 'var(--font-tagline)',
                   fontSize: 11,
+                  fontWeight: 500,
                   color: 'var(--sidebar-text)',
                   lineHeight: 1.3,
                 }}
@@ -231,7 +229,7 @@ export default function Sidebar() {
                 color: isActive ? 'var(--off-white)' : 'var(--sidebar-text)',
                 textDecoration: 'none',
                 transition: 'color 0.15s, background 0.15s',
-                background: isActive ? 'rgba(227, 30, 36, 0.12)' : 'transparent',
+                background: isActive ? 'rgba(45, 111, 232, 0.14)' : 'transparent',
                 marginBottom: 2,
               }}
               onMouseEnter={(e) => {
@@ -254,7 +252,7 @@ export default function Sidebar() {
                   top: 0,
                   bottom: 0,
                   width: 3,
-                  background: 'var(--amber)',
+                  background: 'var(--ai-blue)',
                   borderRadius: '0 2px 2px 0',
                 }} />
               )}
@@ -267,7 +265,7 @@ export default function Sidebar() {
                     exit={{ opacity: 0, x: -8 }}
                     transition={{ duration: 0.12 }}
                     style={{
-                      fontFamily: 'IBM Plex Sans, sans-serif',
+                      fontFamily: 'var(--font-body)',
                       fontSize: 13,
                       fontWeight: isActive ? 600 : 400,
                       whiteSpace: 'nowrap',

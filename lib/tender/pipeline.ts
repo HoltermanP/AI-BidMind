@@ -1,11 +1,12 @@
 /**
- * Tender pipeline — dezelfde fases als op het dashboard, elk gekoppeld aan één AI-agent.
- * Gebruik op dashboard (funnel) en tenderdetail (huidige fase + agent).
+ * Tender pipeline — fases zoals op het dashboard; sommige fases hebben twee AI-subagents.
  */
+
 export const PIPELINE_STAGES = [
   'new',
   'qualifying',
   'analyzing',
+  'inlichtingen',
   'writing',
   'review',
   'submitted',
@@ -14,6 +15,119 @@ export const PIPELINE_STAGES = [
 ] as const
 
 export type PipelineStageId = (typeof PIPELINE_STAGES)[number]
+
+export interface PipelineSubAgent {
+  label: string
+  tagline: string
+  description: string
+}
+
+/** Per fase: één of twee agents (UI toont subagents naast elkaar of gestapeld). */
+export const PIPELINE_STAGE_SUB_AGENTS: Record<PipelineStageId, PipelineSubAgent[]> = {
+  new: [
+    {
+      label: 'Intake Agent',
+      tagline: 'Bronnen & intake',
+      description:
+        'Verwerkt tenders uit TenderNed, Negometrix, handmatige invoer en e-mail. Legt bron (source) vast en scant scope, sector, deadlines en contractcontext. Output: eerste inschatting en aanknopingspunten voor kwalificatie.',
+    },
+  ],
+  qualifying: [
+    {
+      label: 'Screening Agent',
+      tagline: 'Go/No-Go op 5 criteria',
+      description:
+        'Kwalificatie met scoremodel: (1) kerncompetentie match + toelichting, (2) referenties ja/gedeeltelijk/nee, (3) margeschatting realistisch, (4) capaciteit, (5) winkans hoog/middel/laag. Output: go/no-go advies met onderbouwing per criterium.',
+    },
+  ],
+  analyzing: [
+    {
+      label: 'Analyse Agent',
+      tagline: 'Bestek & EMVI-kern',
+      description:
+        'Documentanalyse: naast het volledige rapport levert gestructureerde kern — bestek-samenvatting, gunningscriteria, EMVI-gewichten, selectie-eisen. Diepgaande tenderuitwerking blijft dezelfde taak.',
+    },
+    {
+      label: 'Risico Agent',
+      tagline: 'Contract & aansprakelijkheid',
+      description:
+        'Detecteert contractvorm (RAW, UAV, UAV-GC). Analyseert aansprakelijkheid, boetes, meer-/minderwerk, onvoorziene omstandigheden. Bij UAV-GC: expliciete waarschuwing dat ontwerprisico bij inschrijver ligt. Vult risico-items.',
+    },
+  ],
+  inlichtingen: [
+    {
+      label: 'Inlichtingen Agent',
+      tagline: 'Vragen & NvI',
+      description:
+        'Conceptvragen op basis van analyse (onduidelijkheden), verwerking van de Nota van Inlichtingen, markering wat de inschrijving raakt, optioneel concurrentie-inzichten. Workflow: vragen opstellen → ingediend → NvI ontvangen → verwerkt.',
+    },
+  ],
+  writing: [
+    {
+      label: 'Schrijf Agent',
+      tagline: 'EMVI & plannen',
+      description:
+        'Schrijft EMVI-kwaliteitsplan, plan van aanpak, risicoparagraaf, veiligheidsplan, teamsamenstelling. Instructie: beschrijf wat de OPDRACHTGEVER ermee wint (meerwaarde), niet alleen wat de inschrijver doet.',
+    },
+    {
+      label: 'Prijs Agent',
+      tagline: 'Raming & inschrijfprijs',
+      description:
+        'Kostenraming, gewenste marge (%), inschrijfprijs; waarschuwing bij >25% onder referentie/markt. Bij UAV-GC: aparte ontwerpkostenraming.',
+    },
+  ],
+  review: [
+    {
+      label: 'Review Agent',
+      tagline: 'Indieningscheck',
+      description:
+        'Volledigheid t.o.v. eisenlijst uit fase 3, EMVI-toets op meerwaarde-argumenten, prijs-kwaliteitsbalans, uren tot sluitingstijd. Blokkeer advies bij ontbrekende verplichte onderdelen.',
+    },
+  ],
+  submitted: [
+    {
+      label: 'Monitor Agent',
+      tagline: 'Besluit & Alcatel',
+      description:
+        'Volgt status na indiening: ingediend, Alcatel-termijn, voorlopige gunning, definitief. Alcatel-termijndatum en signalering wanneer die nadert of verstreken is.',
+    },
+  ],
+  won: [
+    {
+      label: 'Overdracht Agent',
+      tagline: 'Checklist & project',
+      description:
+        'Overdrachts-checklist: kick-off, projectleider, mijlpalen, eerste betalingstermijn. Koppelt het tenderdossier logisch aan uitvoering (intern).',
+    },
+  ],
+  lost: [
+    {
+      label: 'Evaluatie Agent',
+      tagline: 'Debriefing & leren',
+      description:
+        'Debriefing-aanvraag (concept e-mail), scorevergelijking eigen vs. winnaar, bezwaar-check (procedureel/inhoudelijk) met advies, leerpunten gekoppeld aan opdrachttype en opdrachtgever.',
+    },
+  ],
+}
+
+function joinSubAgentLines(stage: PipelineStageId, sep: string, fn: (a: PipelineSubAgent) => string): string {
+  return PIPELINE_STAGE_SUB_AGENTS[stage].map(fn).join(sep)
+}
+
+/** Tooltip / beschrijving onder dashboard: alle subagents van de fase. */
+export const PIPELINE_AGENT_DESCRIPTIONS: Record<PipelineStageId, string> = Object.fromEntries(
+  PIPELINE_STAGES.map((s) => [s, joinSubAgentLines(s, '\n\n', (a) => `${a.label}: ${a.description}`)])
+) as Record<PipelineStageId, string>
+
+/** Eerste regel onder fasenaam in de strip (korte taglines, gescheiden). */
+export const PIPELINE_AGENT_TAGLINE: Record<PipelineStageId, string> = Object.fromEntries(
+  PIPELINE_STAGES.map((s) => [s, joinSubAgentLines(s, ' · ', (a) => a.tagline)])
+) as Record<PipelineStageId, string>
+
+/** Actieve agentregel in de kop (alle namen). */
+export const PIPELINE_AGENT_LABELS: Record<PipelineStageId, string> = Object.fromEntries(
+  PIPELINE_STAGES.map((s) => [s, joinSubAgentLines(s, ' · ', (a) => a.label)])
+) as Record<PipelineStageId, string>
 
 /** Tabbladen op de tenderdetailpagina (volgorde staat in de UI). */
 export const TENDER_DETAIL_TAB_IDS = [
@@ -48,6 +162,7 @@ export const PIPELINE_STAGE_TO_TAB: Record<PipelineStageId, TenderDetailTabId> =
   new: 'overview',
   qualifying: 'documents',
   analyzing: 'analysis',
+  inlichtingen: 'questions',
   writing: 'sections',
   review: 'sections',
   submitted: 'timeline',
@@ -67,54 +182,12 @@ export function getTabForPipelineStatus(status: string): TenderDetailTabId {
 
 /** Korte hint op tabknoppen: welke pipeline-fases hier logisch bij horen. */
 export const TENDER_TAB_PIPELINE_HINT: Record<TenderDetailTabId, string> = {
-  overview: 'Past bij pipeline: Nieuw, Ingetrokken',
-  handover: 'Hoort bij pipeline: Gewonnen — Overdracht Agent (implementatieplan & presentatie). Tabblad staat altijd rechts; actief na gunning.',
-  documents: 'Past bij pipeline: Kwalificatie (screening, documenten)',
-  analysis: 'Past bij pipeline: Analyse',
-  questions: 'NVI-vragen (handmatig; geen vaste pipeline-stap)',
-  sections: 'Past bij pipeline: Schrijven en Review',
-  lessons: 'Evaluatie Agent: leerpunten uit terugkoppeling; gebruikt door de Schrijf Agent bij nieuwe aanbiedingen.',
-  timeline: 'Past bij pipeline: Ingediend',
-}
-
-export const PIPELINE_AGENT_LABELS: Record<PipelineStageId, string> = {
-  new: 'Intake Agent',
-  qualifying: 'Screening Agent',
-  analyzing: 'Analyse Agent',
-  writing: 'Schrijf Agent',
-  review: 'Review Agent',
-  submitted: 'Monitor Agent',
-  won: 'Overdracht Agent',
-  lost: 'Evaluatie Agent',
-}
-
-/**
- * Korte ondertitel onder de fase op de tenderdetailpagina (geen dubbele woorden t.o.v. de fasenaam).
- * Volledige agentnaam staat in tooltips via PIPELINE_AGENT_LABELS + DESCRIPTIONS.
- */
-export const PIPELINE_AGENT_TAGLINE: Record<PipelineStageId, string> = {
-  new: 'Intake & scoping',
-  qualifying: 'Match met profiel',
-  analyzing: 'Bestek & criteria',
-  writing: 'Conceptteksten',
-  review: 'Kwaliteit & consistentie',
-  submitted: 'Deadlines & besluit',
-  won: 'Plan & overdracht',
-  lost: 'Leren & verbeteren',
-}
-
-export const PIPELINE_AGENT_DESCRIPTIONS: Record<PipelineStageId, string> = {
-  new: 'Scant binnenkomende tender automatisch: scope, sector, deadline, contractvorm (UAV-GC?), geschiktheid voor jullie profiel. Output: go/no-go advies + samenvatting.',
-  qualifying:
-    "Vergelijkt tendereisen met jullie competenties, referenties en bezetting. Signaleert risico's (te kort, te complex, buiten werkgebied). Output: kwalificatiescore + aanbeveling.",
-  analyzing:
-    'Diept de tender uit: technische eisen, gunningscriteria, weging, valkuilen in het bestek. Voor infra-tenders ook: contractrisico\'s, UAV-GC verplichtingen, systems engineering eisen. Output: gestructureerde analyse + aandachtspunten.',
-  writing:
-    'Genereert concept-antwoorden op kwalitatieve vragen op basis van eerdere inschrijvingen, referentieprojecten en bedrijfsprofiel. Output: eerste concept per gunningscriterium.',
-  review:
-    'Checkt de inschrijving op volledigheid, consistentie, toon en scorepotentieel. Vergelijkt met gunningscriteria. Output: reviewrapport met verbeterpunten.',
-  submitted:
-    'Houdt deadlines bij, signaleert verzoeken om aanvullende info, bewaakt de beslistermijn. Output: alerts + statusupdate.',
-  won: 'Bereidt overdracht naar uitvoering voor: concreet implementatieplan (fasen, mijlpalen, risico’s, RACI) én een beknopte presentatiesamenvatting voor interne kick-off. Output: plan + slide-achtige presentatie (HTML).',
-  lost: 'Analyseert de afwijzing (als feedback beschikbaar), vergelijkt met gewonnen concurrenten, leert voor de volgende inschrijving. Output: verbeterpunten voor het volgende tender.',
+  overview: 'Past bij pipeline: Signalering (nieuw), Ingetrokken',
+  handover: 'Hoort bij pipeline: Gewonnen — Overdracht Agent. Tabblad actief na gunning.',
+  documents: 'Past bij pipeline: Kwalificatie — Screening Agent',
+  analysis: 'Past bij pipeline: Documentanalyse & risico — Analyse + Risico Agent',
+  questions: 'Past bij pipeline: Inlichtingen — Inlichtingen Agent',
+  sections: 'Past bij pipeline: Inschrijving samenstellen (Schrijf + Prijs) en Review',
+  lessons: 'Past bij pipeline: Verloren — Evaluatie Agent',
+  timeline: 'Past bij pipeline: Ingediend / wacht op beslissing — Monitor Agent',
 }

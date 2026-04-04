@@ -38,7 +38,7 @@ export default async function TeamPage() {
   return (
     <div className="app-page-padding">
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: '#0A0F1E', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontFamily: 'var(--font-heading)', fontWeight: 700, color: '#0A0F1E', marginBottom: 4 }}>
           Team
         </h1>
         <p style={{ color: '#6B7280', fontSize: 13 }}>
@@ -92,13 +92,13 @@ export default async function TeamPage() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, borderTop: '1px solid #F3F4F6', paddingTop: 14 }}>
                   <div style={{ textAlign: 'center', padding: '8px 0' }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: '#0A0F1E' }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-heading)', color: '#0A0F1E' }}>
                       {user.managing}
                     </div>
                     <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>Beheert</div>
                   </div>
                   <div style={{ textAlign: 'center', padding: '8px 0', borderLeft: '1px solid #F3F4F6' }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: '#0A0F1E' }}>
+                    <div style={{ fontSize: 20, fontWeight: 700, fontFamily: 'var(--font-heading)', color: '#0A0F1E' }}>
                       {user.participating}
                     </div>
                     <div style={{ fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>Deelneemt</div>

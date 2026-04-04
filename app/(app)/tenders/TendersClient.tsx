@@ -7,7 +7,8 @@ import { motion } from 'framer-motion'
 import Badge from '@/components/ui/Badge'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
-import { formatDate, formatCurrency, getDaysUntil } from '@/lib/utils/format'
+import { formatDate, formatCurrency, getDaysUntil, STATUS_LABELS } from '@/lib/utils/format'
+import { PIPELINE_STAGES } from '@/lib/tender/pipeline'
 import { useToast } from '@/components/ui/Toast'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
 
@@ -82,14 +83,7 @@ interface Props {
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'Alle statussen' },
-  { value: 'new', label: 'Nieuw' },
-  { value: 'qualifying', label: 'Kwalificatie' },
-  { value: 'analyzing', label: 'Analyse' },
-  { value: 'writing', label: 'Schrijven' },
-  { value: 'review', label: 'Review' },
-  { value: 'submitted', label: 'Ingediend' },
-  { value: 'won', label: 'Gewonnen' },
-  { value: 'lost', label: 'Verloren' },
+  ...PIPELINE_STAGES.map((s) => ({ value: s, label: STATUS_LABELS[s] ?? s })),
 ]
 
 export default function TendersClient({ initialTenders, userMap, allUsers, initialSearchParams }: Props) {
@@ -567,7 +561,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
         }}
       >
         <div>
-          <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 26, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
             Tenders
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -627,7 +621,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
           >
             <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <h2 style={{ fontSize: 18, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)' }}>
+                <h2 style={{ fontSize: 18, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)' }}>
                   Aankondigingen van TenderNed
                 </h2>
                 <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>

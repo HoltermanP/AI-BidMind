@@ -6,7 +6,7 @@ export default function InstellingenPage() {
   return (
     <div className="app-page-padding" style={{ maxWidth: 700 }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
           Instellingen
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -17,7 +17,7 @@ export default function InstellingenPage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
         {/* Bedrijfsinformatie link */}
         <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
             Bedrijfsinformatie
           </h3>
           <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 14 }}>
@@ -35,7 +35,7 @@ export default function InstellingenPage() {
 
         {/* Notifications */}
         <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
             Notificaties
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

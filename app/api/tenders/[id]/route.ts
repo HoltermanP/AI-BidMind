@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { tenders, tenderActivities } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
+import { computePrijsAbnormaalLaag } from '@/lib/tenders/compute-prijs-flag'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -29,27 +30,97 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const { id } = await params
     const body = await request.json()
 
-    const allowedFields = [
-      'title', 'referenceNumber', 'contractingAuthority', 'procedureType',
-      'estimatedValue', 'deadlineQuestions', 'deadlineSubmission', 'tendernetUrl',
-      'status', 'goNoGo', 'winProbability', 'tenderManagerId', 'teamMemberIds',
-      'goNoGoReasoning', 'cpvCodes', 'publicationDate',
-    ]
+    const [existing] = await db.select().from(tenders).where(eq(tenders.id, id))
+    if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const updates: Record<string, any> = {}
+    const allowedFields = [
+      'title',
+      'referenceNumber',
+      'contractingAuthority',
+      'procedureType',
+      'estimatedValue',
+      'deadlineQuestions',
+      'deadlineSubmission',
+      'tendernetUrl',
+      'status',
+      'goNoGo',
+      'winProbability',
+      'tenderManagerId',
+      'teamMemberIds',
+      'goNoGoReasoning',
+      'cpvCodes',
+      'publicationDate',
+      'source',
+      'contractType',
+      'goNoGoScore',
+      'analysisCoreJson',
+      'inlichtingenFaseStatus',
+      'monitorStatus',
+      'alcatelTermijnDatum',
+      'nviVerwerkt',
+      'kostenRaming',
+      'margePercentage',
+      'prijsInschrijving',
+      'ontwerpKostenRaming',
+      'handoverKickoffDate',
+      'handoverProjectLeader',
+      'handoverMilestones',
+      'handoverFirstPaymentDue',
+      'evaluatieDebriefingDraft',
+      'evaluatieScoreVergelijkingJson',
+      'evaluatieBezwaarCheckJson',
+    ] as const
+
+    const dateFields = new Set([
+      'deadlineQuestions',
+      'deadlineSubmission',
+      'publicationDate',
+      'alcatelTermijnDatum',
+      'handoverKickoffDate',
+      'handoverFirstPaymentDue',
+    ])
+
+    const decimalFields = new Set([
+      'estimatedValue',
+      'kostenRaming',
+      'margePercentage',
+      'prijsInschrijving',
+      'ontwerpKostenRaming',
+    ])
+
+    const jsonFields = new Set(['goNoGoScore', 'analysisCoreJson', 'evaluatieScoreVergelijkingJson', 'evaluatieBezwaarCheckJson'])
+
+    const updates: Record<string, unknown> = {}
     for (const key of allowedFields) {
-      if (key in body) {
-        if ((key === 'deadlineQuestions' || key === 'deadlineSubmission' || key === 'publicationDate') && body[key]) {
-          updates[key] = new Date(body[key])
-        } else {
-          updates[key] = body[key]
-        }
+      if (!(key in body)) continue
+      const v = body[key]
+      if (v === undefined) continue
+      if (dateFields.has(key)) {
+        updates[key] = v && v !== '' ? new Date(String(v)) : null
+        continue
       }
+      if (decimalFields.has(key)) {
+        if (v === null || v === '') updates[key] = null
+        else updates[key] = typeof v === 'number' ? String(v) : String(v)
+        continue
+      }
+      if (jsonFields.has(key)) {
+        updates[key] = v
+        continue
+      }
+      if (key === 'nviVerwerkt') {
+        updates[key] = Boolean(v)
+        continue
+      }
+      updates[key] = v
     }
+
+    const merged = { ...existing, ...updates } as typeof existing
+    updates.prijsAbnormaalLaag = computePrijsAbnormaalLaag(merged.prijsInschrijving, merged.estimatedValue)
 
     updates.updatedAt = new Date()
 
-    const [updated] = await db.update(tenders).set(updates).where(eq(tenders.id, id)).returning()
+    const [updated] = await db.update(tenders).set(updates as any).where(eq(tenders.id, id)).returning()
 
     // Log status changes
     if ('status' in body) {

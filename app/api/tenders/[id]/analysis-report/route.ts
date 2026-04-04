@@ -111,7 +111,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    const { html: htmlFromParse, estimatedWinProbability } = parseTenderAnalysisReportResponse(raw || '')
+    const { html: htmlFromParse, estimatedWinProbability, analysisCore } = parseTenderAnalysisReportResponse(raw || '')
     const html = sanitizeAndWrapTenderAnalysisHtml(htmlFromParse)
     const now = new Date()
 
@@ -145,6 +145,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (estimatedWinProbability !== null) {
       setPayload.winProbabilityEstimated = estimatedWinProbability
       setPayload.winProbability = estimatedWinProbability
+    }
+
+    if (analysisCore) {
+      const hasCore = Object.values(analysisCore).some((v) => v != null && String(v).trim() !== '')
+      if (hasCore) {
+        setPayload.analysisCoreJson = analysisCore
+      }
     }
 
     const [updated] = await db.update(tenders).set(setPayload).where(eq(tenders.id, id)).returning()
@@ -198,6 +205,7 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
         analysisReportStatus: 'pending',
         analysisReportGeneratedAt: null,
         winProbabilityEstimated: null,
+        analysisCoreJson: null,
         updatedAt: now,
       })
       .where(eq(tenders.id, id))

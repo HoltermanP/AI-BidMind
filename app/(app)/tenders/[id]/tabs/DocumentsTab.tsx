@@ -188,7 +188,7 @@ export default function DocumentsTab({ tender, documents, onDocumentsChange, use
           minWidth: 0,
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>Documenten</span>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Documenten</span>
         {documents.length > 0 && (
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
             {documents.length} document{documents.length !== 1 ? 'en' : ''}
@@ -366,7 +366,7 @@ export default function DocumentsTab({ tender, documents, onDocumentsChange, use
           maxHeight: 600,
         }}>
           <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>AI Analyse</span>
+            <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>AI Analyse</span>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Button
                 size="sm"

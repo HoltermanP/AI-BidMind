@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 44" width="200" height="44" role="img" aria-label="AI-Group.nl">
+  <defs>
+    <linearGradient id="ai-stripe-light" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2D6FE8"/>
+      <stop offset="100%" stop-color="#4B8EFF"/>
+    </linearGradient>
+  </defs>
+  <text x="0" y="26" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" font-size="18" fill="#4B8EFF">AI</text>
+  <text x="28" y="26" font-family="system-ui, -apple-system, 'Segoe UI', sans-serif" font-weight="700" font-size="18" fill="#0A0A0B">-Group.nl</text>
+  <rect x="0" y="34" width="168" height="3" fill="url(#ai-stripe-light)" rx="1.5"/>
+</svg>

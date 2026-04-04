@@ -44,7 +44,18 @@ const TENDER_ROWS = [
   { title: 'Integrale aanbesteding onderhoud wegen en kunstwerken N-wegen Zuid-Holland', referenceNumber: '2024-TN-469778', contractingAuthority: 'Provincie Zuid-Holland', publicationDate: '2024-08-22', deadlineQuestions: '2024-09-30T12:00:00', deadlineSubmission: '2024-10-25T14:00:00', estimatedValue: '68000000.00', cpvCodes: ['45233100', '45221111'], procedureType: 'Europees openbaar', status: 'withdrawn', goNoGo: 'no_go', winProbability: 25, tenderManagerId: 'user_seed_002', teamMemberIds: ['user_seed_003'] },
 ]
 
-const TENDER_STATUSES = ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost', 'withdrawn'] as const
+const TENDER_STATUSES = [
+  'new',
+  'qualifying',
+  'analyzing',
+  'inlichtingen',
+  'writing',
+  'review',
+  'submitted',
+  'won',
+  'lost',
+  'withdrawn',
+] as const
 type TenderStatus = (typeof TENDER_STATUSES)[number]
 const GO_NO_GO = ['pending', 'go', 'no_go'] as const
 type GoNoGo = (typeof GO_NO_GO)[number]
@@ -66,6 +77,7 @@ function toTenderRow(row: (typeof TENDER_ROWS)[0]) {
     tenderManagerId: row.tenderManagerId,
     teamMemberIds: row.teamMemberIds ?? [],
     tendernetUrl: `https://www.tenderned.nl/aankondigingen/overzicht/${row.referenceNumber?.replace(/[^0-9]/g, '') || 'unknown'}`,
+    source: 'tenderned' as const,
   }
 }
 

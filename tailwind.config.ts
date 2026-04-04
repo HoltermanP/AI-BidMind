@@ -10,24 +10,25 @@ const config: Config = {
     extend: {
       colors: {
         navy: {
-          DEFAULT: '#58595b',
-          light: '#6d6e70',
-          mid: '#808184',
+          DEFAULT: '#0d1428',
+          light: '#1a2540',
+          mid: '#2a3348',
         },
         amber: {
-          DEFAULT: '#e31e24',
-          light: '#ea4b50',
-          muted: '#fde8e9',
+          DEFAULT: '#ff4d1c',
+          light: '#ff7a55',
+          muted: '#fff0eb',
         },
         'slate-blue': {
-          DEFAULT: '#ffc600',
-          light: '#fff4cc',
+          DEFAULT: '#2d6fe8',
+          light: '#e8f1ff',
         },
-        'off-white': '#f8fafc',
+        'off-white': '#f4f6fa',
         border: '#e2e8f0',
       },
       fontFamily: {
-        syne: ['Syne', 'sans-serif'],
+        grotesk: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        tagline: ['DM Sans', 'system-ui', 'sans-serif'],
         plex: ['IBM Plex Sans', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
       },

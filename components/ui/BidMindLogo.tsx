@@ -2,9 +2,7 @@
 
 /**
  * BidMind-logo: AI-hersenen — brein met neurale netwerk-elementen (knooppunten + verbindingen).
- * - Linker hersenhelft: donkerblauw (#1A2540)
- * - Rechter hersenhelft: oranje (#F5A623)
- * - Neuronen (cirkels) en lijnen voor duidelijke AI-associatie
+ * Kleuren: AI-Group huisstijl (AI Blue / Velocity Red).
  */
 interface BidMindLogoProps {
   width?: number
@@ -14,11 +12,12 @@ interface BidMindLogoProps {
   iconOnly?: boolean
 }
 
-/* Van Gelder huisstijl: donkergrijs + rood (vangelder.com) */
-const APP_NAVY = '#58595b'
-const APP_ORANGE = '#e31e24'
-const APP_ORANGE_LIGHT = '#ea4b50'
-const APP_ORANGE_DARK = '#b0181e'
+/* AI-Group huisstijl — bron: public/AI-Group-Huisstijlgids_2.pdf */
+const APP_NAVY = '#0d1428'
+const APP_NAVY_LIGHT = '#2d6fe8'
+const APP_ORANGE = '#ff4d1c'
+const APP_ORANGE_LIGHT = '#ff7a55'
+const APP_ORANGE_DARK = '#e03d10'
 
 /* Brein-silhouet (symmetrisch om x=90 in 0 0 180 80) */
 const BRAIN_PATH =
@@ -71,10 +70,10 @@ export function BidMindLogo({ width = 180, height, className, iconOnly = false }
           </feMerge>
         </filter>
         <filter id="bm-text-shadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="1" stdDeviation="0.8" floodColor="#58595b" floodOpacity="0.4" />
+          <feDropShadow dx="0" dy="1" stdDeviation="0.8" floodColor="#0d1428" floodOpacity="0.45" />
         </filter>
         <linearGradient id="bm-left" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#6d6e70" />
+          <stop offset="0%" stopColor={APP_NAVY_LIGHT} />
           <stop offset="100%" stopColor={APP_NAVY} />
         </linearGradient>
         <linearGradient id="bm-right" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -147,7 +146,7 @@ export function BidMindLogo({ width = 180, height, className, iconOnly = false }
             fill="#fff"
             filter="url(#bm-text-shadow)"
             style={{
-              fontFamily: 'Syne, sans-serif',
+              fontFamily: 'var(--font-heading), sans-serif',
               fontWeight: 700,
               fontSize: 20,
               fontStyle: 'italic',

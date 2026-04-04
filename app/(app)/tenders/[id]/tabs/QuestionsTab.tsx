@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState, useEffect } from 'react'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { useToast } from '@/components/ui/Toast'
@@ -171,6 +171,96 @@ export default function QuestionsTab({ tender, questions, onQuestionsChange, doc
     category: 'Technisch',
     priority: 'high',
   })
+
+  const [inlichtingenRows, setInlichtingenRows] = useState<
+    Array<{
+      id: string
+      vraag: string
+      antwoord: string | null
+      raaktInschrijving: boolean | null
+      ingediendOp: string | null
+    }>
+  >([])
+  const [inlBusy, setInlBusy] = useState(false)
+  const [inlVraag, setInlVraag] = useState('')
+
+  useEffect(() => {
+    let cancelled = false
+    fetch(`/api/tenders/${tender.id}/inlichtingen`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (!cancelled && Array.isArray(data)) setInlichtingenRows(data)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [tender.id])
+
+  const addInlichtingenRow = async () => {
+    if (!inlVraag.trim()) return
+    setInlBusy(true)
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/inlichtingen`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ vraag: inlVraag.trim() }),
+      })
+      if (!res.ok) throw new Error()
+      const row = await res.json()
+      setInlichtingenRows((prev) => [row, ...prev])
+      setInlVraag('')
+      toast('Inlichtingenregel toegevoegd', 'success')
+    } catch {
+      toast('Toevoegen mislukt', 'error')
+    } finally {
+      setInlBusy(false)
+    }
+  }
+
+  const patchInlichtingenRow = async (
+    itemId: string,
+    body: Record<string, unknown>,
+    okMsg?: string
+  ) => {
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/inlichtingen/${itemId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      if (!res.ok) throw new Error()
+      const updated = await res.json()
+      setInlichtingenRows((prev) =>
+        prev.map((r) =>
+          r.id === itemId
+            ? {
+                id: updated.id,
+                vraag: updated.vraag,
+                antwoord: updated.antwoord,
+                raaktInschrijving: updated.raaktInschrijving,
+                ingediendOp: updated.ingediendOp,
+              }
+            : r
+        )
+      )
+      if (okMsg) toast(okMsg, 'success')
+    } catch {
+      toast('Opslaan mislukt', 'error')
+    }
+  }
+
+  const deleteInlichtingenRow = async (itemId: string) => {
+    if (!confirm('Deze regel verwijderen?')) return
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}/inlichtingen/${itemId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
+      setInlichtingenRows((prev) => prev.filter((r) => r.id !== itemId))
+      toast('Verwijderd', 'success')
+    } catch {
+      toast('Verwijderen mislukt', 'error')
+    }
+  }
 
   const generateQuestions = async () => {
     setGenerating(true)
@@ -414,6 +504,83 @@ export default function QuestionsTab({ tender, questions, onQuestionsChange, doc
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, maxWidth: '100%' }}>
+      <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 16 }}>
+        <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 10 }}>
+          Inlichtingen-register
+        </h3>
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 12, lineHeight: 1.5 }}>
+          Apart van NVI-conceptvragen: vaste registratie van vragen, NvI-antwoorden en of de inschrijving wordt geraakt.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+          <input
+            value={inlVraag}
+            onChange={(e) => setInlVraag(e.target.value)}
+            placeholder="Nieuwe vraag / thema…"
+            style={{
+              flex: '1 1 220px',
+              padding: '7px 10px',
+              border: '1px solid var(--border)',
+              borderRadius: 4,
+              fontSize: 13,
+              fontFamily: 'IBM Plex Sans, sans-serif',
+            }}
+          />
+          <Button type="button" variant="secondary" loading={inlBusy} onClick={addInlichtingenRow}>
+            Toevoegen
+          </Button>
+        </div>
+        {inlichtingenRows.length === 0 ? (
+          <p style={{ fontSize: 12, color: 'var(--muted)', margin: 0 }}>Nog geen regels.</p>
+        ) : (
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {inlichtingenRows.map((row) => (
+              <li
+                key={row.id}
+                style={{
+                  border: '1px solid var(--border)',
+                  borderRadius: 4,
+                  padding: 10,
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ fontWeight: 600, marginBottom: 6 }}>{row.vraag}</div>
+                <label style={{ fontSize: 11, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Antwoord (NvI)</label>
+                <textarea
+                  defaultValue={row.antwoord || ''}
+                  rows={2}
+                  style={{
+                    width: '100%',
+                    padding: 6,
+                    border: '1px solid var(--border)',
+                    borderRadius: 4,
+                    fontSize: 12,
+                    fontFamily: 'IBM Plex Sans, sans-serif',
+                    marginBottom: 8,
+                  }}
+                  onBlur={(e) => {
+                    const v = e.target.value
+                    if (v !== (row.antwoord || '')) patchInlichtingenRow(row.id, { antwoord: v })
+                  }}
+                />
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'center' }}>
+                  <label style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(row.raaktInschrijving)}
+                      onChange={(e) => patchInlichtingenRow(row.id, { raaktInschrijving: e.target.checked })}
+                    />
+                    Raakt inschrijving
+                  </label>
+                  <Button type="button" variant="danger" size="sm" onClick={() => deleteInlichtingenRow(row.id)}>
+                    Verwijderen
+                  </Button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* Actiebalk – vaste positie, geen sticky, duidelijke scheiding van tab-balk */}
       <div
         className="tender-tab-actions"
@@ -523,7 +690,7 @@ export default function QuestionsTab({ tender, questions, onQuestionsChange, doc
       {/* Add form */}
       {showAddForm && (
         <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 20 }}>
-          <h4 style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)', marginBottom: 14 }}>Nieuwe vraag</h4>
+          <h4 style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)', marginBottom: 14 }}>Nieuwe vraag</h4>
           <div style={{ display: 'grid', gap: 12 }}>
             <textarea
               value={newQ.questionText}
@@ -589,7 +756,7 @@ export default function QuestionsTab({ tender, questions, onQuestionsChange, doc
         Object.entries(groupedByCategory).map(([category, qs]) => (
           <div key={category} style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', background: '#FAFAF8', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>{category}</span>
+              <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>{category}</span>
               <span style={{ fontSize: 11, color: 'var(--muted)' }}>{qs.length} vragen</span>
             </div>
             <div>

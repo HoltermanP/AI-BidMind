@@ -100,6 +100,7 @@ export async function importTenderNedPublication(
       tendernedPublicatieId: publicatieId,
       tenderDescription: detail.opdrachtBeschrijving ?? null,
       tenderManagerId: userId,
+      source: 'tenderned',
       status: 'new',
       goNoGo: 'pending',
       winProbability: 0,

@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { STATUS_COLORS } from '@/lib/utils/format'
+import { PIPELINE_STAGE_SUB_AGENTS, type PipelineStageId } from '@/lib/tender/pipeline'
 
 export interface PipelineStage {
   stage: string
@@ -91,6 +92,7 @@ export default function PipelineAgentCards({
         const colors = STATUS_COLORS[stage.stage]
         const accent = colors?.text ?? 'var(--text-secondary)'
         const pct = pipelinePct(stage.count)
+        const subAgents = PIPELINE_STAGE_SUB_AGENTS[stage.stage as PipelineStageId] ?? []
         const agentLabel = agentLabels[stage.stage] ?? stage.stage
         return (
           <div
@@ -103,13 +105,64 @@ export default function PipelineAgentCards({
             onMouseEnter={() => showTooltip(stage.stage)}
             onMouseLeave={hideTooltip}
           >
-            <div className="dashboard-pipeline-agent-inner">
-              <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                </svg>
-              </div>
-              <span className="dashboard-pipeline-agent-name">{agentLabel}</span>
+            <div
+              className="dashboard-pipeline-agent-inner"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 6,
+                width: '100%',
+              }}
+            >
+              {subAgents.length <= 1 ? (
+                <>
+                  <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                    </svg>
+                  </div>
+                  <span className="dashboard-pipeline-agent-name">{agentLabel}</span>
+                </>
+              ) : (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center',
+                    alignItems: 'flex-start',
+                    gap: 8,
+                    width: '100%',
+                  }}
+                >
+                  {subAgents.map((agent) => (
+                    <div
+                      key={agent.label}
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 4,
+                        flex: '1 1 80px',
+                        minWidth: 0,
+                      }}
+                    >
+                      <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      </div>
+                      <span
+                        className="dashboard-pipeline-agent-name"
+                        style={{ textAlign: 'center', fontSize: 10, lineHeight: 1.25, maxWidth: 108 }}
+                      >
+                        {agent.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
               <span className="dashboard-pipeline-agent-pct">{totalTenders > 0 ? pct : 0}%</span>
             </div>
           </div>

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { STATUS_COLORS, STATUS_LABELS } from '@/lib/utils/format'
 import type { PipelineStage } from '@/components/dashboard/PipelineAgentCards'
+import { PIPELINE_STAGE_SUB_AGENTS, type PipelineStageId } from '@/lib/tender/pipeline'
 
 interface Props {
   pipeline: PipelineStage[]
@@ -92,6 +93,7 @@ export default function PipelineMobileStack({
           const accent = colors?.text ?? 'var(--text-secondary)'
           const pct = pipelinePct(stage.count)
           const agentLabel = agentLabels[stage.stage] ?? stage.stage
+          const subAgents = PIPELINE_STAGE_SUB_AGENTS[stage.stage as PipelineStageId] ?? []
 
           return (
             <div key={stage.stage} className="dashboard-pipeline-mobile-step">
@@ -128,15 +130,39 @@ export default function PipelineMobileStack({
                 onMouseLeave={hideTooltip}
               >
                 <div className="dashboard-pipeline-agent-inner dashboard-pipeline-agent-inner--mobile">
-                  <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent }}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
-                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                    </svg>
-                  </div>
-                  <div className="dashboard-pipeline-agent-mobile-text">
-                    <span className="dashboard-pipeline-agent-name">{agentLabel}</span>
-                    <span className="dashboard-pipeline-agent-pct">{totalTenders > 0 ? pct : 0}%</span>
-                  </div>
+                  {subAgents.length <= 1 ? (
+                    <>
+                      <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                          <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                      </div>
+                      <div className="dashboard-pipeline-agent-mobile-text">
+                        <span className="dashboard-pipeline-agent-name">{agentLabel}</span>
+                        <span className="dashboard-pipeline-agent-pct">{totalTenders > 0 ? pct : 0}%</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, width: '100%' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center' }}>
+                        {subAgents.map((a) => (
+                          <div key={a.label} style={{ display: 'flex', alignItems: 'center', gap: 6, maxWidth: '48%' }}>
+                            <div className="dashboard-pipeline-agent-icon" style={{ backgroundColor: accent, flexShrink: 0 }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                              </svg>
+                            </div>
+                            <span className="dashboard-pipeline-agent-name" style={{ fontSize: 10, lineHeight: 1.2 }}>
+                              {a.label}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                      <span className="dashboard-pipeline-agent-pct" style={{ alignSelf: 'center' }}>
+                        {totalTenders > 0 ? pct : 0}%
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
 

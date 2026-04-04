@@ -170,7 +170,7 @@ export default function BedrijfsinformatiePage() {
   return (
     <div className="app-page-padding" style={{ maxWidth: 800 }}>
       <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 26, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
+        <h1 style={{ fontSize: 26, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 4 }}>
           Bedrijfsinformatie
         </h1>
         <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
@@ -181,7 +181,7 @@ export default function BedrijfsinformatiePage() {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
         {/* Basisgegevens */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
             Basisgegevens
           </h3>
           <div style={{ display: 'grid', gap: 14 }}>
@@ -240,7 +240,7 @@ export default function BedrijfsinformatiePage() {
 
         {/* Visiedocumenten */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
             Visiedocumenten (Word of PDF)
           </h3>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
@@ -271,7 +271,7 @@ export default function BedrijfsinformatiePage() {
 
         {/* Jaarplannen */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
             Jaarplannen (Word of PDF)
           </h3>
           <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14 }}>
@@ -302,7 +302,7 @@ export default function BedrijfsinformatiePage() {
 
         {/* Tekstvelden */}
         <div style={sectionStyle}>
-          <h3 style={{ fontSize: 14, fontFamily: 'Syne, sans-serif', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 18 }}>
             Tekstvelden (vrij invullen)
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>

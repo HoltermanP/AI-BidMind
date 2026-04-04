@@ -6,8 +6,13 @@ import Avatar from '@/components/ui/Avatar'
 import Link from 'next/link'
 import PipelineAgentCards from '@/components/dashboard/PipelineAgentCards'
 import PipelineMobileStack from '@/components/dashboard/PipelineMobileStack'
-import { PIPELINE_AGENT_LABELS, PIPELINE_AGENT_DESCRIPTIONS } from '@/lib/tender/pipeline'
+import DashboardPipelinePortalTooltip from '@/components/dashboard/DashboardPipelinePortalTooltip'
+import { PIPELINE_AGENT_LABELS, PIPELINE_AGENT_DESCRIPTIONS, PIPELINE_STAGES } from '@/lib/tender/pipeline'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
+
+/** Hovertekst voor win rate (KPI + pipeline-footer) */
+const WIN_RATE_TOOLTIP =
+  'Gewonnen gedeeld door ingediend + gewonnen + verloren. Tenders die nog op een beslissing wachten, tellen dus ook mee in de noemer.'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,7 +22,7 @@ async function getDashboardData() {
       kpi: { activeTenders: 0, upcomingDeadlines: 0, goNoGoRequired: 0, submittedThisQuarter: 0, winRate: 0 },
       recentActivities: [],
       upcomingAll: [],
-      pipeline: ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost'].map((stage) => ({ stage, count: 0 })),
+      pipeline: PIPELINE_STAGES.map((stage) => ({ stage, count: 0 })),
       userMap: {} as Record<string, { id: string; name: string | null; email: string | null; avatarUrl: string | null }>,
     }
   }
@@ -45,8 +50,7 @@ async function getDashboardData() {
 
   const userMap = Object.fromEntries(allUsers.map((u) => [u.id, u]))
 
-  const pipelineStages = ['new', 'qualifying', 'analyzing', 'writing', 'review', 'submitted', 'won', 'lost']
-  const pipeline = pipelineStages.map((stage) => ({
+  const pipeline = PIPELINE_STAGES.map((stage) => ({
     stage,
     count: allTenders.filter((t) => t.status === stage).length,
   }))
@@ -102,7 +106,7 @@ export default async function DashboardPage() {
   const pipelinePct = (stageCount: number) => (totalTenders > 0 ? Math.round((stageCount / totalTenders) * 100) : 0)
   const pendingDecision = pipeline.find((p) => p.stage === 'submitted')?.count ?? 0
   const lostCount = pipeline.find((p) => p.stage === 'lost')?.count ?? 0
-  const activeAgentsCount = 8
+  const activeAgentsCount = 10
 
   return (
     <div className="dashboard-page">
@@ -144,7 +148,7 @@ export default async function DashboardPage() {
               )
             })}
             {/* Pijlen — kolommen 1, 3, 5, 7, 9, 11, 13 */}
-            {Array.from({ length: 7 }).map((_, i) => (
+            {Array.from({ length: Math.max(0, pipeline.length - 1) }).map((_, i) => (
               <span key={`arrow-${i}`} className="dashboard-pipeline-arrow" style={{ gridColumn: 2 * i + 2 }} aria-hidden>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12h14M12 5l7 7-7 7" />
@@ -180,10 +184,14 @@ export default async function DashboardPage() {
             <span className="dashboard-pipeline-stat-value dashboard-pipeline-stat-warning">{pendingDecision}</span>
             <span className="dashboard-pipeline-stat-label">Wacht op beslissing</span>
           </div>
-          <div className="dashboard-pipeline-stat">
+          <DashboardPipelinePortalTooltip
+            content={WIN_RATE_TOOLTIP}
+            className="dashboard-pipeline-stat"
+            style={{ cursor: 'help' }}
+          >
             <span className="dashboard-pipeline-stat-value dashboard-pipeline-stat-success">{kpi.winRate}%</span>
             <span className="dashboard-pipeline-stat-label">Win rate</span>
-          </div>
+          </DashboardPipelinePortalTooltip>
           <div className="dashboard-pipeline-stat">
             <span className="dashboard-pipeline-stat-value dashboard-pipeline-stat-error">{lostCount}</span>
             <span className="dashboard-pipeline-stat-label">Verloren</span>
@@ -195,10 +203,19 @@ export default async function DashboardPage() {
       <div className="dashboard-kpi-grid">
         {kpiCards.map((card) => (
           <Link key={card.label} href={card.href} className="dashboard-kpi-link">
-            <div className="dashboard-kpi-card" style={{ borderTopColor: card.color }}>
-              <span className="dashboard-kpi-value">{card.value}</span>
-              <span className="dashboard-kpi-label">{card.label}</span>
-            </div>
+            {card.label === 'Win rate' ? (
+              <DashboardPipelinePortalTooltip content={WIN_RATE_TOOLTIP}>
+                <div className="dashboard-kpi-card" style={{ borderTopColor: card.color }}>
+                  <span className="dashboard-kpi-value">{card.value}</span>
+                  <span className="dashboard-kpi-label">{card.label}</span>
+                </div>
+              </DashboardPipelinePortalTooltip>
+            ) : (
+              <div className="dashboard-kpi-card" style={{ borderTopColor: card.color }}>
+                <span className="dashboard-kpi-value">{card.value}</span>
+                <span className="dashboard-kpi-label">{card.label}</span>
+              </div>
+            )}
           </Link>
         ))}
       </div>

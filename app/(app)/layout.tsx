@@ -17,7 +17,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 minHeight: 0,
                 overflowY: 'auto',
                 overflowX: 'hidden',
-                background: '#F7F6F2',
+                background: 'var(--off-white)',
                 paddingBottom: 'env(safe-area-inset-bottom, 0px)',
               }}
             >

@@ -30,9 +30,22 @@ interface Props {
   documents: Doc[]
   lessons: LessonRow[]
   onLessonsChange: (rows: LessonRow[]) => void
+  evaluatieDebriefingDraft?: string | null
+  evaluatieScoreVergelijkingJson?: Record<string, unknown> | null
+  evaluatieBezwaarCheckJson?: Record<string, unknown> | null
+  onEvalComplete?: () => void | Promise<void>
 }
 
-export default function LessonsLearnedTab({ tenderId, documents, lessons, onLessonsChange }: Props) {
+export default function LessonsLearnedTab({
+  tenderId,
+  documents,
+  lessons,
+  onLessonsChange,
+  evaluatieDebriefingDraft,
+  evaluatieScoreVergelijkingJson,
+  evaluatieBezwaarCheckJson,
+  onEvalComplete,
+}: Props) {
   const { toast } = useToast()
   const [docId, setDocId] = useState('')
   const [evaluating, setEvaluating] = useState(false)
@@ -63,6 +76,7 @@ export default function LessonsLearnedTab({ tenderId, documents, lessons, onLess
       const n = typeof data.inserted === 'number' ? data.inserted : 0
       toast(n > 0 ? `${n} leerpunt(en) opgeslagen` : 'Geen nieuwe leerpunten (tekst te mager of geen inhoud)', 'success')
       await refreshLessons()
+      await onEvalComplete?.()
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Evaluatie mislukt', 'error')
     } finally {
@@ -91,11 +105,64 @@ export default function LessonsLearnedTab({ tenderId, documents, lessons, onLess
           borderBottom: '1px solid #E5E7EB',
         }}
       >
-        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)' }}>Leerpunten</span>
+        <span style={{ fontSize: 13, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Leerpunten</span>
         {lessons.length > 0 && (
           <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{lessons.length} vastgelegd</span>
         )}
       </div>
+
+      {(evaluatieDebriefingDraft ||
+        (evaluatieScoreVergelijkingJson && Object.keys(evaluatieScoreVergelijkingJson).length > 0) ||
+        (evaluatieBezwaarCheckJson && Object.keys(evaluatieBezwaarCheckJson).length > 0)) && (
+        <div
+          style={{
+            background: 'white',
+            border: '1px solid var(--border)',
+            borderRadius: 4,
+            padding: 16,
+            marginBottom: 20,
+          }}
+        >
+          <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 10 }}>
+            Evaluatie-agent output
+          </h3>
+          {evaluatieDebriefingDraft && (
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Concept debriefing-mail</span>
+              <pre
+                style={{
+                  fontSize: 12,
+                  whiteSpace: 'pre-wrap',
+                  margin: 0,
+                  padding: 10,
+                  background: '#f9fafb',
+                  borderRadius: 4,
+                  maxHeight: 220,
+                  overflow: 'auto',
+                }}
+              >
+                {evaluatieDebriefingDraft}
+              </pre>
+            </div>
+          )}
+          {evaluatieScoreVergelijkingJson && Object.keys(evaluatieScoreVergelijkingJson).length > 0 && (
+            <div style={{ marginBottom: 12 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Scorevergelijking</span>
+              <pre style={{ fontSize: 11, margin: 0, padding: 10, background: '#f9fafb', borderRadius: 4, overflow: 'auto' }}>
+                {JSON.stringify(evaluatieScoreVergelijkingJson, null, 2)}
+              </pre>
+            </div>
+          )}
+          {evaluatieBezwaarCheckJson && Object.keys(evaluatieBezwaarCheckJson).length > 0 && (
+            <div>
+              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Bezwaar-check</span>
+              <pre style={{ fontSize: 11, margin: 0, padding: 10, background: '#f9fafb', borderRadius: 4, overflow: 'auto' }}>
+                {JSON.stringify(evaluatieBezwaarCheckJson, null, 2)}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
 
       <div
         style={{
@@ -106,7 +173,7 @@ export default function LessonsLearnedTab({ tenderId, documents, lessons, onLess
           marginBottom: 28,
         }}
       >
-        <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
+        <h3 style={{ fontFamily: 'var(--font-heading)', fontSize: 15, fontWeight: 700, color: 'var(--navy)', marginBottom: 8 }}>
           Evaluatie Agent
         </h3>
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.55, marginBottom: 16 }}>
@@ -166,7 +233,7 @@ export default function LessonsLearnedTab({ tenderId, documents, lessons, onLess
                 }}
               >
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-                  <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'Syne, sans-serif', color: 'var(--navy)', flex: '1 1 200px' }}>
+                  <span style={{ fontSize: 15, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)', flex: '1 1 200px' }}>
                     {L.title}
                   </span>
                   <span
