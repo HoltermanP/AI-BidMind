@@ -6,6 +6,7 @@ import {
   PIPELINE_AGENT_LABELS,
   PIPELINE_AGENT_DESCRIPTIONS,
   PIPELINE_AGENT_TAGLINE,
+  VALID_FORWARD_TRANSITIONS,
   getTabForPipelineStatus,
   TENDER_DETAIL_TAB_LABELS,
 } from '@/lib/tender/pipeline'
@@ -22,6 +23,17 @@ function ChevronRight() {
       <path d="M9 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   )
+}
+
+function isLockedStage(currentStatus: string, stage: string): boolean {
+  if (stage === currentStatus) return false
+  if (stage === 'withdrawn')   return false
+  const stages = PIPELINE_STAGES as readonly string[]
+  const currentIdx = stages.indexOf(currentStatus as any)
+  const stageIdx   = stages.indexOf(stage as any)
+  if (stageIdx < currentIdx) return false // achterwaarts altijd toegestaan
+  const allowed = VALID_FORWARD_TRANSITIONS[currentStatus] ?? []
+  return !allowed.includes(stage)
 }
 
 export default function TenderPipelineStrip({ status, onStatusChange }: Props) {
@@ -71,12 +83,14 @@ export default function TenderPipelineStrip({ status, onStatusChange }: Props) {
           <div className="tender-pipeline-strip-track" role="list" aria-label="Fases en gekoppelde agents">
             {PIPELINE_STAGES.map((stage, i) => {
               const isActive = !withdrawn && status === stage
+              const locked   = !withdrawn && !isActive && isLockedStage(status, stage)
               const colors = STATUS_COLORS[stage]
               const bg = isActive ? colors?.bg ?? '#E8F0FE' : '#ffffff'
               const accent = colors?.text ?? '#1A56DB'
               const border = isActive ? `1.5px solid ${accent}` : '1px solid var(--border)'
               const tabLabel = TENDER_DETAIL_TAB_LABELS[getTabForPipelineStatus(stage)]
-              const title = `${STATUS_LABELS[stage] ?? stage}: ${PIPELINE_AGENT_LABELS[stage]}. ${PIPELINE_AGENT_DESCRIPTIONS[stage] ?? ''} — Opent: ${tabLabel}`
+              const baseTitle = `${STATUS_LABELS[stage] ?? stage}: ${PIPELINE_AGENT_LABELS[stage]}. ${PIPELINE_AGENT_DESCRIPTIONS[stage] ?? ''} — Opent: ${tabLabel}`
+              const title = locked ? `🔒 Vorige fase nog niet afgerond — ${baseTitle}` : baseTitle
               const tagline = PIPELINE_AGENT_TAGLINE[stage]
 
               return (
@@ -91,13 +105,16 @@ export default function TenderPipelineStrip({ status, onStatusChange }: Props) {
                     ref={isActive ? activeRef : undefined}
                     title={title}
                     aria-current={isActive ? 'step' : undefined}
+                    aria-disabled={locked ? 'true' : undefined}
                     onClick={() => onStatusChange(stage)}
-                    className={`tender-pipeline-strip-step ${isActive ? 'tender-pipeline-strip-step--active' : ''} ${withdrawn ? 'tender-pipeline-strip-step--muted' : ''}`}
+                    className={`tender-pipeline-strip-step ${isActive ? 'tender-pipeline-strip-step--active' : ''} ${withdrawn ? 'tender-pipeline-strip-step--muted' : ''} ${locked ? 'tender-pipeline-strip-step--locked' : ''}`}
                     style={
                       {
-                        background: withdrawn ? '#f9fafb' : bg,
-                        border,
+                        background: withdrawn || locked ? '#f9fafb' : bg,
+                        border: locked ? '1px dashed var(--border)' : border,
                         '--step-accent': accent,
+                        opacity: locked ? 0.45 : 1,
+                        cursor: locked ? 'not-allowed' : 'pointer',
                       } as React.CSSProperties
                     }
                   >

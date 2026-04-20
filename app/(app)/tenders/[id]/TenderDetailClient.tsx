@@ -11,6 +11,7 @@ import { formatDate, formatDateTime, getDaysUntil } from '@/lib/utils/format'
 import TenderPipelineStrip from '@/components/tenders/TenderPipelineStrip'
 import { getTabForPipelineStatus, TENDER_TAB_PIPELINE_HINT, type TenderDetailTabId } from '@/lib/tender/pipeline'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
+import { isValidTransition } from '@/lib/tender/pipeline'
 import OverviewTab from './tabs/OverviewTab'
 import AnalysisTab from './tabs/AnalysisTab'
 import DocumentsTab from './tabs/DocumentsTab'
@@ -92,6 +93,15 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
   }, [updateTabIndicator])
 
   const patchTender = async (updates: Record<string, any>) => {
+    // Client-side pre-validatie: blokkeer ongeldige voorwaartse statussprongen
+    if (updates.status !== undefined && updates.status !== tender.status) {
+      const { valid, message } = isValidTransition(tender.status, String(updates.status))
+      if (!valid) {
+        toast(message ?? 'Ongeldige statusovergang', 'error')
+        return
+      }
+    }
+
     const prevTab = activeTab
     if (updates.status !== undefined) {
       setActiveTab(getTabForPipelineStatus(String(updates.status)))
@@ -103,12 +113,15 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
       })
-      if (!res.ok) throw new Error()
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.error ?? 'Opslaan mislukt')
+      }
       // Sync with server response so auto-derived fields (sub-phases) are applied
       const serverTender = await res.json()
       setTender(serverTender)
-    } catch {
-      toast('Opslaan mislukt', 'error')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Opslaan mislukt', 'error')
       setTender(initialTender)
       if (updates.status !== undefined) {
         setActiveTab(prevTab)

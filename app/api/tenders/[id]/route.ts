@@ -4,6 +4,7 @@ import { db } from '@/lib/db'
 import { tenders, tenderActivities } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
 import { computePrijsAbnormaalLaag } from '@/lib/tenders/compute-prijs-flag'
+import { isValidTransition } from '@/lib/tender/pipeline'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -113,6 +114,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         continue
       }
       updates[key] = v
+    }
+
+    // Validate status transition
+    if ('status' in body && body.status !== existing.status) {
+      const { valid, message } = isValidTransition(existing.status ?? '', body.status)
+      if (!valid) {
+        return NextResponse.json({ error: message }, { status: 422 })
+      }
     }
 
     // Apply sub-phase initialization rules when status changes

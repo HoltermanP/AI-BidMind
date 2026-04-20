@@ -172,6 +172,43 @@ export const PIPELINE_STAGE_TO_TAB: Record<PipelineStageId, TenderDetailTabId> =
 
 export const PIPELINE_WITHDRAWN_TAB: TenderDetailTabId = 'overview'
 
+/**
+ * Toegestane voorwaartse overgangen per fase.
+ * Achterwaarts (corrigeren) en naar 'withdrawn' zijn altijd toegestaan.
+ * 'inlichtingen' is optioneel: vanuit 'analyzing' mag je ook direct naar 'writing'.
+ */
+export const VALID_FORWARD_TRANSITIONS: Partial<Record<string, string[]>> = {
+  new:          ['qualifying'],
+  qualifying:   ['analyzing'],
+  analyzing:    ['inlichtingen', 'writing'],
+  inlichtingen: ['writing'],
+  writing:      ['review'],
+  review:       ['submitted'],
+  submitted:    ['won', 'lost'],
+}
+
+export function isValidTransition(from: string, to: string): { valid: boolean; message?: string } {
+  if (to === from)        return { valid: true }
+  if (to === 'withdrawn') return { valid: true }
+
+  const stages = PIPELINE_STAGES as readonly string[]
+  const fromIdx = stages.indexOf(from as PipelineStageId)
+  const toIdx   = stages.indexOf(to   as PipelineStageId)
+
+  if (fromIdx === -1 || toIdx === -1) return { valid: true }
+
+  // Achterwaartse correctie altijd toegestaan
+  if (toIdx < fromIdx) return { valid: true }
+
+  const allowed = VALID_FORWARD_TRANSITIONS[from] ?? []
+  if (allowed.includes(to)) return { valid: true }
+
+  return {
+    valid: false,
+    message: `Vorige fase nog niet afgerond — verplaats de tender eerst naar de juiste tussenstap.`,
+  }
+}
+
 export function getTabForPipelineStatus(status: string): TenderDetailTabId {
   if (status === 'withdrawn') return PIPELINE_WITHDRAWN_TAB
   if ((PIPELINE_STAGES as readonly string[]).includes(status)) {
