@@ -115,6 +115,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       updates[key] = v
     }
 
+    // Apply sub-phase initialization rules when status changes
+    if ('status' in body && body.status !== existing.status) {
+      const newStatus = body.status as string
+
+      if (newStatus === 'inlichtingen' && !('inlichtingenFaseStatus' in body)) {
+        updates.inlichtingenFaseStatus = 'vragen_opstellen'
+      }
+
+      if (newStatus === 'submitted' && !('monitorStatus' in body)) {
+        updates.monitorStatus = 'ingediend'
+      }
+
+      if ((newStatus === 'won' || newStatus === 'lost') && !('monitorStatus' in body)) {
+        updates.monitorStatus = 'definitief'
+      }
+    }
+
     const merged = { ...existing, ...updates } as typeof existing
     updates.prijsAbnormaalLaag = computePrijsAbnormaalLaag(merged.prijsInschrijving, merged.estimatedValue)
 
@@ -123,13 +140,13 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const [updated] = await db.update(tenders).set(updates as any).where(eq(tenders.id, id)).returning()
 
     // Log status changes
-    if ('status' in body) {
+    if ('status' in body && body.status !== existing.status) {
       await db.insert(tenderActivities).values({
         tenderId: id,
         userId,
         activityType: 'status_changed',
         description: `Status gewijzigd naar ${body.status}`,
-        metadata: { status: body.status },
+        metadata: { status: body.status, previousStatus: existing.status },
       })
     }
 

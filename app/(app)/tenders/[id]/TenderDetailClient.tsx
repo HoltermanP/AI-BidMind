@@ -104,6 +104,9 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
         body: JSON.stringify(updates),
       })
       if (!res.ok) throw new Error()
+      // Sync with server response so auto-derived fields (sub-phases) are applied
+      const serverTender = await res.json()
+      setTender(serverTender)
     } catch {
       toast('Opslaan mislukt', 'error')
       setTender(initialTender)
