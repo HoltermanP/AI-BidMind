@@ -172,6 +172,48 @@ export const PIPELINE_STAGE_TO_TAB: Record<PipelineStageId, TenderDetailTabId> =
 
 export const PIPELINE_WITHDRAWN_TAB: TenderDetailTabId = 'overview'
 
+/** Welke pipeline-fases horen bij elk tabblad (meerdere bij 'sections'). */
+export const TAB_PHASES: Record<TenderDetailTabId, string[]> = {
+  overview:  ['new'],
+  documents: ['qualifying'],
+  analysis:  ['analyzing'],
+  questions: ['inlichtingen'],
+  sections:  ['writing', 'review'],
+  timeline:  ['submitted'],
+  handover:  ['won'],
+  lessons:   ['lost'],
+}
+
+export type TabState = 'done' | 'active' | 'next' | 'locked'
+
+/**
+ * Bepaalt de visuele staat van een tab op basis van de huidige tenderstatus.
+ * - done:   fase is afgerond (status is verder in de pipeline)
+ * - active: huidige fase(s) horen bij dit tabblad
+ * - next:   tabblad is de eerstvolgende geldige stap
+ * - locked: stap nog niet bereikbaar
+ */
+export function getTabState(tabId: TenderDetailTabId, currentStatus: string): TabState {
+  if (currentStatus === 'withdrawn') {
+    if (tabId === 'overview') return 'active'
+    if (tabId === 'handover' || tabId === 'lessons') return 'locked'
+    return 'done'
+  }
+
+  const phases = TAB_PHASES[tabId] ?? []
+  if (phases.includes(currentStatus)) return 'active'
+
+  if ((currentStatus === 'won'  && tabId === 'lessons') ||
+      (currentStatus === 'lost' && tabId === 'handover')) return 'locked'
+
+  const stages = PIPELINE_STAGES as readonly string[]
+  const currentIdx = stages.indexOf(currentStatus as PipelineStageId)
+
+  if (phases.every(p => stages.indexOf(p as PipelineStageId) < currentIdx)) return 'done'
+
+  return isValidTransition(currentStatus, phases[0]).valid ? 'next' : 'locked'
+}
+
 /**
  * Toegestane voorwaartse overgangen per fase.
  * Achterwaarts (corrigeren) en naar 'withdrawn' zijn altijd toegestaan.

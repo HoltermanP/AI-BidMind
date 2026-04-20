@@ -8,8 +8,8 @@ import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/Toast'
 import { formatDate, formatDateTime, getDaysUntil } from '@/lib/utils/format'
-import TenderPipelineStrip from '@/components/tenders/TenderPipelineStrip'
-import { getTabForPipelineStatus, TENDER_TAB_PIPELINE_HINT, type TenderDetailTabId } from '@/lib/tender/pipeline'
+import { getTabForPipelineStatus, TAB_PHASES, getTabState, type TabState, type TenderDetailTabId } from '@/lib/tender/pipeline'
+import { STATUS_LABELS } from '@/lib/utils/format'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
 import { isValidTransition } from '@/lib/tender/pipeline'
 import OverviewTab from './tabs/OverviewTab'
@@ -33,16 +33,16 @@ interface Props {
   allUsers: any[]
 }
 
-/** Volgorde volgt de tenderflow: van intake tot monitoring; Overdracht staat vast als laatste (na gunning). */
-const BASE_TABS: { id: TenderDetailTabId; label: string }[] = [
-  { id: 'overview', label: 'Overzicht' },
-  { id: 'documents', label: 'Documenten' },
-  { id: 'analysis', label: 'Tenderanalyse' },
-  { id: 'questions', label: 'NVI Vragen' },
-  { id: 'sections', label: 'Aanbieding' },
-  { id: 'lessons', label: 'Leerpunten' },
-  { id: 'timeline', label: 'Tijdlijn' },
-  { id: 'handover', label: 'Overdracht' },
+/** Volgorde = pipelinevolgorde; elk tabblad vertegenwoordigt één fase. */
+const BASE_TABS: { id: TenderDetailTabId; label: string; optional?: boolean }[] = [
+  { id: 'overview',   label: 'Signalering' },
+  { id: 'documents',  label: 'Kwalificatie' },
+  { id: 'analysis',   label: 'Documentanalyse' },
+  { id: 'questions',  label: 'Inlichtingen', optional: true },
+  { id: 'sections',   label: 'Aanbieding' },
+  { id: 'timeline',   label: 'Ingediend' },
+  { id: 'handover',   label: 'Gewonnen' },
+  { id: 'lessons',    label: 'Verloren' },
 ]
 
 export default function TenderDetailClient({ tender: initialTender, documents: initialDocs, questions: initialQuestions, sections: initialSections, activities: initialActivities, notes: initialNotes, lessonsLearned: initialLessons, userMap, allUsers }: Props) {
@@ -129,6 +129,21 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
     }
   }
 
+  const handleTabClick = (tabId: TenderDetailTabId) => {
+    const state = getTabState(tabId, tender.status)
+    if (state === 'locked') {
+      toast('Vorige fase nog niet afgerond', 'error')
+      return
+    }
+    if (state === 'done' || state === 'active') {
+      setActiveTab(tabId)
+      return
+    }
+    // next: zet status naar de entry-fase van dit tabblad
+    const targetPhase = TAB_PHASES[tabId]?.[0]
+    if (targetPhase) patchTender({ status: targetPhase })
+  }
+
   const daysToNVI = getDaysUntil(tender.deadlineQuestions)
   const daysToSubmission = getDaysUntil(tender.deadlineSubmission)
   const manager = tender.tenderManagerId ? userMap[tender.tenderManagerId] : null
@@ -195,9 +210,16 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                   {tender.referenceNumber}
                 </span>
               )}
+              <span style={{
+                fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 20,
+                background: tender.status === 'won' ? '#D1FAE5' : tender.status === 'lost' ? '#FEE2E2' : '#EFF6FF',
+                color:      tender.status === 'won' ? '#065F46' : tender.status === 'lost' ? '#991B1B' : '#1D4ED8',
+                whiteSpace: 'nowrap',
+              }}>
+                {STATUS_LABELS[tender.status] ?? tender.status}
+              </span>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 0, width: '100%' }}>
-              <TenderPipelineStrip status={tender.status} onStatusChange={(next) => patchTender({ status: next })} />
               <div
                 style={{
                   marginTop: 2,
@@ -343,50 +365,79 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
           </div>
         </div>
 
-        {/* Tabs – duidelijke onderrand, body valt niet onder dit blok */}
+        {/* Tabs = pipelinefases */}
         <div style={{ position: 'relative', display: 'flex', gap: 0, flexShrink: 0, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 10 }}>
           {BASE_TABS.map((tab) => {
-            const handoverLocked = tab.id === 'handover' && tender.status !== 'won'
+            const state: TabState = getTabState(tab.id, tender.status)
+            const isActive = activeTab === tab.id
+
+            const stateColor: Record<TabState, string> = {
+              done:   '#059669',
+              active: '#F5A623',
+              next:   'var(--text-secondary)',
+              locked: 'var(--muted)',
+            }
+            const stateIcon: Record<TabState, string> = {
+              done:   '✓',
+              active: '●',
+              next:   '○',
+              locked: '○',
+            }
+
+            const titleMap: Record<TabState, string> = {
+              done:   `${tab.label} — afgerond`,
+              active: `${tab.label} — huidige fase`,
+              next:   `${tab.label} — klik om naar deze fase te gaan`,
+              locked: `${tab.label} — vorige fase nog niet afgerond`,
+            }
+            if (tab.optional && state === 'next') titleMap.next = `${tab.label} (optioneel) — klik om te starten`
+
             return (
-            <button
-              key={tab.id}
-              ref={(el) => { tabRefs.current[tab.id] = el }}
-              onClick={() => setActiveTab(tab.id)}
-              title={
-                handoverLocked
-                  ? `${TENDER_TAB_PIPELINE_HINT[tab.id]} — Zet de pipeline op “Gewonnen” om de Overdracht Agent te gebruiken.`
-                  : TENDER_TAB_PIPELINE_HINT[tab.id]
-              }
-              style={{
-                padding: '6px 14px',
-                background: 'none',
-                border: 'none',
-                borderBottom: '2px solid transparent',
-                color: activeTab === tab.id ? 'var(--navy)' : 'var(--text-secondary)',
-                fontFamily: 'IBM Plex Sans, sans-serif',
-                fontSize: 13,
-                fontWeight: activeTab === tab.id ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'color 0.15s',
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-                opacity: handoverLocked ? 0.55 : 1,
-              }}
-            >
-              {tab.label}
-              {tab.id === 'documents' && documents.length > 0 && (
-                <span style={{ marginLeft: 6, background: '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>{documents.length}</span>
-              )}
-              {tab.id === 'questions' && questions.length > 0 && (
-                <span style={{ marginLeft: 6, background: '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>{questions.length}</span>
-              )}
-              {tab.id === 'sections' && sections.length > 0 && (
-                <span style={{ marginLeft: 6, background: approvedSections > 0 ? '#D1FAE5' : '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: approvedSections > 0 ? '#065F46' : 'var(--text-secondary)' }}>{approvedSections}/{sections.length}</span>
-              )}
-              {tab.id === 'lessons' && lessonsLearned.length > 0 && (
-                <span style={{ marginLeft: 6, background: '#EDE9FE', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: '#5B21B6' }}>{lessonsLearned.length}</span>
-              )}
-            </button>
+              <button
+                key={tab.id}
+                ref={(el) => { tabRefs.current[tab.id] = el }}
+                onClick={() => handleTabClick(tab.id)}
+                title={titleMap[state]}
+                aria-current={isActive ? 'page' : undefined}
+                style={{
+                  padding: '6px 14px',
+                  background: 'none',
+                  border: 'none',
+                  borderBottom: '2px solid transparent',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 5,
+                  color: isActive ? 'var(--navy)' : state === 'locked' ? 'var(--muted)' : 'var(--text-secondary)',
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  cursor: state === 'locked' ? 'not-allowed' : 'pointer',
+                  opacity: state === 'locked' ? 0.45 : 1,
+                  transition: 'color 0.15s',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span style={{ fontSize: 9, color: stateColor[state], lineHeight: 1 }}>
+                  {stateIcon[state]}
+                </span>
+                {tab.label}
+                {tab.optional && state !== 'done' && state !== 'active' && (
+                  <span style={{ fontSize: 9, color: 'var(--muted)', fontStyle: 'italic' }}>opt</span>
+                )}
+                {tab.id === 'documents' && documents.length > 0 && (
+                  <span style={{ background: '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>{documents.length}</span>
+                )}
+                {tab.id === 'questions' && questions.length > 0 && (
+                  <span style={{ background: '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)' }}>{questions.length}</span>
+                )}
+                {tab.id === 'sections' && sections.length > 0 && (
+                  <span style={{ background: approvedSections > 0 ? '#D1FAE5' : '#F3F4F6', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: approvedSections > 0 ? '#065F46' : 'var(--text-secondary)' }}>{approvedSections}/{sections.length}</span>
+                )}
+                {tab.id === 'lessons' && lessonsLearned.length > 0 && (
+                  <span style={{ background: '#EDE9FE', borderRadius: 10, padding: '1px 6px', fontSize: 10, fontWeight: 700, color: '#5B21B6' }}>{lessonsLearned.length}</span>
+                )}
+              </button>
             )
           })}
           {/* Tab indicator – exacte breedte onder actieve tab */}
@@ -442,11 +493,11 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                     Overdracht Agent
                   </h2>
                   <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.5, marginBottom: 16 }}>
-                    Implementatieplan en presentatie horen bij de fase <strong>Gewonnen</strong>. Zet de pipeline hierboven op
-                    Gewonnen zodra de opdracht is gegund — dan kun je hier het plan en de presentatie laten genereren.
+                    Implementatieplan en presentatie horen bij de fase <strong>Gewonnen</strong>. Klik op het tabblad
+                    &quot;Gewonnen&quot; zodra de opdracht is gegund — dan kun je hier het plan en de presentatie laten genereren.
                   </p>
-                  <Button type="button" size="sm" onClick={() => patchTender({ status: 'won' })}>
-                    Pipeline op Gewonnen zetten
+                  <Button type="button" size="sm" onClick={() => handleTabClick('handover')}>
+                    Naar fase Gewonnen
                   </Button>
                 </div>
               )}
