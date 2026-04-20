@@ -184,16 +184,30 @@ export const TAB_PHASES: Record<TenderDetailTabId, string[]> = {
   lessons:   ['lost'],
 }
 
-export type TabState = 'done' | 'active' | 'next' | 'locked'
+/** Welk werk er aantoonbaar gedaan is per fase — wordt doorgegeven vanuit de component. */
+export interface PhaseEvidence {
+  qualifying:   boolean  // goNoGo besloten of screening-score aanwezig
+  analyzing:    boolean  // analyse- of risicorapport aanwezig/gedaan
+  inlichtingen: boolean  // vragen of inlichtingen-records aanwezig
+  writing:      boolean  // secties met inhoud aanwezig
+  review:       boolean  // reviewrapport aanwezig/gedaan
+}
+
+export type TabState = 'done' | 'skipped' | 'active' | 'next' | 'locked'
 
 /**
- * Bepaalt de visuele staat van een tab op basis van de huidige tenderstatus.
- * - done:   fase is afgerond (status is verder in de pipeline)
- * - active: huidige fase(s) horen bij dit tabblad
- * - next:   tabblad is de eerstvolgende geldige stap
- * - locked: stap nog niet bereikbaar
+ * Bepaalt de visuele staat van een tab.
+ * - done:    fase aantoonbaar afgerond
+ * - skipped: status is verder maar het werk in deze fase ontbreekt (optioneel of gemist)
+ * - active:  huidige fase
+ * - next:    eerstvolgende geldige stap
+ * - locked:  nog niet bereikbaar
  */
-export function getTabState(tabId: TenderDetailTabId, currentStatus: string): TabState {
+export function getTabState(
+  tabId: TenderDetailTabId,
+  currentStatus: string,
+  evidence?: PhaseEvidence,
+): TabState {
   if (currentStatus === 'withdrawn') {
     if (tabId === 'overview') return 'active'
     if (tabId === 'handover' || tabId === 'lessons') return 'locked'
@@ -209,9 +223,27 @@ export function getTabState(tabId: TenderDetailTabId, currentStatus: string): Ta
   const stages = PIPELINE_STAGES as readonly string[]
   const currentIdx = stages.indexOf(currentStatus as PipelineStageId)
 
-  if (phases.every(p => stages.indexOf(p as PipelineStageId) < currentIdx)) return 'done'
+  const allBefore = phases.every(p => stages.indexOf(p as PipelineStageId) < currentIdx)
+  if (allBefore) {
+    if (!evidence) return 'done'
+    return tabHasEvidence(tabId, evidence) ? 'done' : 'skipped'
+  }
 
   return isValidTransition(currentStatus, phases[0]).valid ? 'next' : 'locked'
+}
+
+function tabHasEvidence(tabId: TenderDetailTabId, e: PhaseEvidence): boolean {
+  switch (tabId) {
+    case 'overview':  return true               // startpunt, altijd gepasseerd
+    case 'documents': return e.qualifying
+    case 'analysis':  return e.analyzing
+    case 'questions': return e.inlichtingen     // optioneel — skipped is normaal
+    case 'sections':  return e.writing || e.review
+    case 'timeline':  return true               // submitted is altijd expliciet gezet
+    case 'handover':  return true
+    case 'lessons':   return true
+    default:          return true
+  }
 }
 
 /**

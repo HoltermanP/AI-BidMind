@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button'
 import Avatar from '@/components/ui/Avatar'
 import { useToast } from '@/components/ui/Toast'
 import { formatDate, formatDateTime, getDaysUntil } from '@/lib/utils/format'
-import { getTabForPipelineStatus, TAB_PHASES, getTabState, type TabState, type TenderDetailTabId } from '@/lib/tender/pipeline'
+import { getTabForPipelineStatus, TAB_PHASES, getTabState, type TabState, type PhaseEvidence, type TenderDetailTabId } from '@/lib/tender/pipeline'
 import { STATUS_LABELS } from '@/lib/utils/format'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
 import { isValidTransition } from '@/lib/tender/pipeline'
@@ -127,6 +127,15 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
         setActiveTab(prevTab)
       }
     }
+  }
+
+  const phaseEvidence: PhaseEvidence = {
+    qualifying:   tender.goNoGo !== 'pending' || tender.goNoGoScore != null,
+    analyzing:    tender.analysisReportStatus === 'done' || tender.riskReportStatus === 'done' ||
+                  !!tender.analysisReportHtml || !!tender.riskReportHtml || !!tender.analysisCoreJson,
+    inlichtingen: questions.length > 0,
+    writing:      sections.some((s: any) => (s.wordCount ?? 0) > 0 || (s.content ?? '').trim().length > 10),
+    review:       tender.reviewReportStatus === 'done' || !!tender.reviewReportHtml,
   }
 
   const handleTabClick = (tabId: TenderDetailTabId) => {
@@ -368,27 +377,30 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
         {/* Tabs = pipelinefases */}
         <div style={{ position: 'relative', display: 'flex', gap: 0, flexShrink: 0, overflowX: 'auto', overflowY: 'hidden', paddingBottom: 10 }}>
           {BASE_TABS.map((tab) => {
-            const state: TabState = getTabState(tab.id, tender.status)
+            const state: TabState = getTabState(tab.id, tender.status, phaseEvidence)
             const isActive = activeTab === tab.id
 
             const stateColor: Record<TabState, string> = {
-              done:   '#059669',
-              active: '#F5A623',
-              next:   'var(--text-secondary)',
-              locked: 'var(--muted)',
+              done:    '#059669',
+              skipped: '#9CA3AF',
+              active:  '#F5A623',
+              next:    'var(--text-secondary)',
+              locked:  'var(--muted)',
             }
             const stateIcon: Record<TabState, string> = {
-              done:   '✓',
-              active: '●',
-              next:   '○',
-              locked: '○',
+              done:    '✓',
+              skipped: '—',
+              active:  '●',
+              next:    '○',
+              locked:  '○',
             }
 
             const titleMap: Record<TabState, string> = {
-              done:   `${tab.label} — afgerond`,
-              active: `${tab.label} — huidige fase`,
-              next:   `${tab.label} — klik om naar deze fase te gaan`,
-              locked: `${tab.label} — vorige fase nog niet afgerond`,
+              done:    `${tab.label} — afgerond`,
+              skipped: `${tab.label} — overgeslagen of nog niet uitgevoerd`,
+              active:  `${tab.label} — huidige fase`,
+              next:    `${tab.label} — klik om naar deze fase te gaan`,
+              locked:  `${tab.label} — vorige fase nog niet afgerond`,
             }
             if (tab.optional && state === 'next') titleMap.next = `${tab.label} (optioneel) — klik om te starten`
 
@@ -412,7 +424,7 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                   fontSize: 13,
                   fontWeight: isActive ? 600 : 400,
                   cursor: state === 'locked' ? 'not-allowed' : 'pointer',
-                  opacity: state === 'locked' ? 0.45 : 1,
+                  opacity: state === 'locked' ? 0.4 : state === 'skipped' ? 0.65 : 1,
                   transition: 'color 0.15s',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
