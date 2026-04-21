@@ -11,7 +11,10 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:migrate": "npx tsx lib/db/migrate.ts",
-    "db:seed": "npx tsx lib/db/seed-runner.ts"
+    "db:seed": "npx tsx lib/db/seed-runner.ts",
+    "db:reset-users-abiant": "npx tsx lib/db/reset-users-abiant-runner.ts",
+    "db:remove-jan": "npx tsx lib/db/remove-jan-runner.ts",
+    "db:sync-abiant-jobtitles": "npx tsx lib/db/sync-abiant-jobtitles-runner.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",

@@ -55,6 +55,12 @@ export const users = pgTable('users', {
   name: text('name'),
   email: text('email'),
   avatarUrl: text('avatar_url'),
+  /** Als true: webhook overschrijft avatarUrl niet meer met Clerk-profiel */
+  customAvatar: boolean('custom_avatar').default(false).notNull(),
+  /** Optioneel LinkedIn-profiel-URL (voor automatische foto via Unavatar) */
+  linkedinUrl: text('linkedin_url'),
+  /** Rol/functietitel op het werk (bv. bidmanager); los van user_role enum */
+  jobTitle: text('job_title'),
   role: userRoleEnum('role').default('team_member'),
   createdAt: timestamp('created_at').defaultNow(),
 })
