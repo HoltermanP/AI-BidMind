@@ -14,7 +14,8 @@
     "db:seed": "npx tsx lib/db/seed-runner.ts",
     "db:reset-users-abiant": "npx tsx lib/db/reset-users-abiant-runner.ts",
     "db:remove-jan": "npx tsx lib/db/remove-jan-runner.ts",
-    "db:sync-abiant-jobtitles": "npx tsx lib/db/sync-abiant-jobtitles-runner.ts"
+    "db:sync-abiant-jobtitles": "npx tsx lib/db/sync-abiant-jobtitles-runner.ts",
+    "db:backfill-tenderned-fetched-at": "npx tsx lib/db/backfill-tenderned-fetched-at-runner.ts"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",

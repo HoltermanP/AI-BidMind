@@ -91,6 +91,8 @@ export const tenders = pgTable('tenders', {
   teamMemberIds: text('team_member_ids').array().default([]),
   tendernetUrl: text('tendernet_url'),
   tendernedPublicatieId: text('tenderned_publicatie_id'),
+  /** Wanneer deze tender uit TenderNed is geïmporteerd (sync/panel); bestaande rijen vóór dit veld: null */
+  tendernedFetchedAt: timestamp('tenderned_fetched_at'),
   /** Korte omschrijving uit TenderNed (opdrachtBeschrijving); gebruikt door intake-geschiktheid */
   tenderDescription: text('tender_description'),
   goNoGoReasoning: text('go_no_go_reasoning'),

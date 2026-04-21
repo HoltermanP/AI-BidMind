@@ -85,6 +85,8 @@ export async function importTenderNedPublication(
     detail.opdrachtBeschrijving
   )
 
+  const fetchedAt = new Date()
+
   const [tender] = await db
     .insert(tenders)
     .values({
@@ -98,6 +100,7 @@ export async function importTenderNedPublication(
       cpvCodes,
       tendernetUrl,
       tendernedPublicatieId: publicatieId,
+      tendernedFetchedAt: fetchedAt,
       tenderDescription: detail.opdrachtBeschrijving ?? null,
       tenderManagerId: userId,
       source: 'tenderned',

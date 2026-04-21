@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import Badge from '@/components/ui/Badge'
 import Avatar from '@/components/ui/Avatar'
 import Button from '@/components/ui/Button'
-import { formatDate, formatCurrency, getDaysUntil, STATUS_LABELS } from '@/lib/utils/format'
+import { formatDate, formatDateTime, formatCurrency, getDaysUntil, STATUS_LABELS } from '@/lib/utils/format'
 import { PIPELINE_STAGES } from '@/lib/tender/pipeline'
 import { useToast } from '@/components/ui/Toast'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
@@ -58,6 +58,8 @@ interface Tender {
   tenderManagerId: string | null
   teamMemberIds: string[] | null
   tendernedPublicatieId?: string | null
+  /** Gezet bij import vanuit TenderNed; oudere tenders zonder historie: leeg */
+  tendernedFetchedAt?: Date | null
   createdAt: Date | null
   updatedAt: Date | null
   intakeSuitabilityTier: string | null
@@ -1201,6 +1203,14 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
                       color: 'var(--text-secondary)',
                     }}
                   >
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                        Ophaal TenderNed
+                      </div>
+                      <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                        {tender.tendernedFetchedAt ? formatDateTime(tender.tendernedFetchedAt) : '—'}
+                      </div>
+                    </div>
                     <div>
                       <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
                         Deadline
@@ -1307,6 +1317,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
                   { label: 'Titel', key: null, width: null },
                   { label: 'Aanbesteder', key: null, width: 160 },
                   { label: 'Kenmerk', key: null, width: 120 },
+                  { label: 'Ophaal TenderNed', key: null, width: 130 },
                   { label: 'Deadline', key: 'deadline', width: 120 },
                   { label: 'Waarde', key: 'value', width: 110 },
                   { label: 'Manager', key: null, width: 80 },
@@ -1343,7 +1354,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--muted)' }}>
+                  <td colSpan={12} style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--muted)' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
                       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#D1D5DB" strokeWidth="1">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -1399,6 +1410,9 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
                         <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11, color: 'var(--text-secondary)' }}>
                           {tender.referenceNumber || '—'}
                         </span>
+                      </td>
+                      <td style={{ padding: '11px 14px', fontSize: 11, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                        {tender.tendernedFetchedAt ? formatDateTime(tender.tendernedFetchedAt) : '—'}
                       </td>
                       <td style={{ padding: '11px 14px' }}>
                         {tender.deadlineSubmission ? (
