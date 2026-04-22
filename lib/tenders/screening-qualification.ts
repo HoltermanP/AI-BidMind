@@ -46,12 +46,23 @@ export async function runScreeningQualificationForTenderId(tenderId: string): Pr
 
   const goNoGoScore = { ...obj, advies: goNoGo === 'no_go' ? 'no_go' : 'go' }
 
+  // Parse integer winkans (new format); fall back gracefully for old string format
+  const rawWinkans = obj.winkans
+  let winProbability: number | undefined
+  if (typeof rawWinkans === 'number' && rawWinkans >= 0 && rawWinkans <= 100) {
+    winProbability = Math.round(rawWinkans)
+  } else if (typeof rawWinkans === 'string') {
+    const parsed = parseInt(rawWinkans.replace('%', '').trim(), 10)
+    if (!Number.isNaN(parsed)) winProbability = Math.min(100, Math.max(0, parsed))
+  }
+
   await db
     .update(tenders)
     .set({
       goNoGoScore: goNoGoScore as Record<string, unknown>,
       goNoGo,
       goNoGoReasoning: reasoning,
+      ...(winProbability != null ? { winProbability, winProbabilityEstimated: winProbability } : {}),
       updatedAt: new Date(),
     })
     .where(eq(tenders.id, tenderId))

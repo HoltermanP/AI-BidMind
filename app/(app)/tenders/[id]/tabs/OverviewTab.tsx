@@ -20,6 +20,125 @@ function toInputDate(d: string | Date | null | undefined): string {
   return x.toISOString().slice(0, 16)
 }
 
+function ScreeningCard({ score }: { score: Record<string, unknown> }) {
+  const fmt = (v: unknown) => (v == null || v === '') ? '—' : String(v)
+  const boolBadge = (v: unknown) => v === true
+    ? { label: 'Ja', bg: '#D1FAE5', color: '#065F46' }
+    : v === false
+      ? { label: 'Nee', bg: '#FEE2E2', color: '#991B1B' }
+      : { label: fmt(v), bg: '#F3F4F6', color: 'var(--text-secondary)' }
+
+  const refColor: Record<string, { bg: string; color: string }> = {
+    ja:          { bg: '#D1FAE5', color: '#065F46' },
+    gedeeltelijk:{ bg: '#FEF3C7', color: '#92400E' },
+    nee:         { bg: '#FEE2E2', color: '#991B1B' },
+  }
+  const posColor: Record<string, { bg: string; color: string }> = {
+    sterk:     { bg: '#D1FAE5', color: '#065F46' },
+    gemiddeld: { bg: '#FEF3C7', color: '#92400E' },
+    zwak:      { bg: '#FEE2E2', color: '#991B1B' },
+  }
+  const prijsColor: Record<string, { bg: string; color: string }> = {
+    laag:   { bg: '#D1FAE5', color: '#065F46' },
+    middel: { bg: '#FEF3C7', color: '#92400E' },
+    hoog:   { bg: '#FEE2E2', color: '#991B1B' },
+  }
+
+  const kern = score.kerncompetentie as Record<string, unknown> | undefined
+  const ref  = String(score.referenties ?? '').toLowerCase()
+  const concurrentie = score.concurrentie as Record<string, unknown> | undefined
+  const winkans = typeof score.winkans === 'number' ? score.winkans : null
+
+  const Badge = ({ label, bg, color }: { label: string; bg: string; color: string }) => (
+    <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 20, background: bg, color }}>
+      {label}
+    </span>
+  )
+
+  const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', paddingBottom: 10, borderBottom: '1px solid #F3F4F6' }}>
+      <span style={{ fontSize: 12, color: 'var(--muted)', fontWeight: 600, minWidth: 160, flexShrink: 0, paddingTop: 2 }}>{label}</span>
+      <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5, flex: 1 }}>{children}</div>
+    </div>
+  )
+
+  return (
+    <div style={{ border: '1px solid var(--border)', borderRadius: 6, overflow: 'hidden', fontSize: 12 }}>
+      <div style={{ padding: '10px 14px', background: '#F9FAFB', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <span style={{ fontSize: 12, fontWeight: 700, fontFamily: 'var(--font-heading)', color: 'var(--navy)' }}>Screeningsresultaat</span>
+        {winkans != null && (
+          <span style={{ fontSize: 13, fontWeight: 700, color: winkans >= 50 ? '#065F46' : winkans >= 30 ? '#92400E' : '#991B1B', marginLeft: 'auto' }}>
+            Winskans {winkans}%
+          </span>
+        )}
+      </div>
+      <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {kern && (
+          <Row label="Kerncompetentie">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 4 }}>
+              {(() => { const b = boolBadge(kern.match); return <Badge label={b.label} bg={b.bg} color={b.color} /> })()}
+            </div>
+            {!!kern.toelichting && <span>{fmt(kern.toelichting)}</span>}
+          </Row>
+        )}
+        {ref && (
+          <Row label="Referenties">
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: score.referenties_toelichting ? 4 : 0 }}>
+              {(() => { const c = refColor[ref] ?? { bg: '#F3F4F6', color: 'var(--text-secondary)' }; return <Badge label={ref.charAt(0).toUpperCase() + ref.slice(1)} bg={c.bg} color={c.color} /> })()}
+            </div>
+            {!!score.referenties_toelichting && <span>{fmt(score.referenties_toelichting)}</span>}
+          </Row>
+        )}
+        <Row label="Margeschatting realistisch">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: score.margeschatting_toelichting ? 4 : 0 }}>
+            {(() => { const b = boolBadge(score.margeschatting_realistisch); return <Badge label={b.label} bg={b.bg} color={b.color} /> })()}
+          </div>
+          {!!score.margeschatting_toelichting && <span>{fmt(score.margeschatting_toelichting)}</span>}
+        </Row>
+        <Row label="Capaciteit beschikbaar">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: score.capaciteit_toelichting ? 4 : 0 }}>
+            {(() => { const b = boolBadge(score.capaciteit_beschikbaar); return <Badge label={b.label} bg={b.bg} color={b.color} /> })()}
+          </div>
+          {!!score.capaciteit_toelichting && <span>{fmt(score.capaciteit_toelichting)}</span>}
+        </Row>
+
+        {concurrentie && (
+          <Row label="Concurrentie">
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 6, alignItems: 'center' }}>
+              {concurrentie.verwacht_aantal_inschrijvers != null && (
+                <span style={{ fontSize: 11, background: '#EEF2FF', color: '#4338CA', fontWeight: 600, padding: '2px 10px', borderRadius: 20 }}>
+                  ~{fmt(concurrentie.verwacht_aantal_inschrijvers)} inschrijvers
+                </span>
+              )}
+              {!!concurrentie.eigen_positie && (
+                (() => { const c = posColor[String(concurrentie.eigen_positie).toLowerCase()] ?? { bg: '#F3F4F6', color: 'var(--text-secondary)' }; return <Badge label={`Positie: ${fmt(concurrentie.eigen_positie)}`} bg={c.bg} color={c.color} /> })()
+              )}
+              {!!concurrentie.prijsdruk && (
+                (() => { const c = prijsColor[String(concurrentie.prijsdruk).toLowerCase()] ?? { bg: '#F3F4F6', color: 'var(--text-secondary)' }; return <Badge label={`Prijsdruk: ${fmt(concurrentie.prijsdruk)}`} bg={c.bg} color={c.color} /> })()
+              )}
+            </div>
+            {!!concurrentie.concurrentieprofiel && (
+              <p style={{ margin: '0 0 4px' }}><strong style={{ color: 'var(--navy)' }}>Concurrentieprofiel:</strong> {fmt(concurrentie.concurrentieprofiel)}</p>
+            )}
+            {!!concurrentie.eigen_positie_toelichting && (
+              <p style={{ margin: '0 0 4px' }}><strong style={{ color: 'var(--navy)' }}>Eigen positie:</strong> {fmt(concurrentie.eigen_positie_toelichting)}</p>
+            )}
+            {!!concurrentie.prijsdruk_toelichting && (
+              <p style={{ margin: 0 }}><strong style={{ color: 'var(--navy)' }}>Prijsdruk:</strong> {fmt(concurrentie.prijsdruk_toelichting)}</p>
+            )}
+          </Row>
+        )}
+
+        {!!score.winkans_onderbouwing && (
+          <Row label="Winskans onderbouwing">
+            {fmt(score.winkans_onderbouwing)}
+          </Row>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function OverviewTab({ tender, onUpdate, allUsers, userMap }: Props) {
   const { toast } = useToast()
   const [form, setForm] = useState({
@@ -203,26 +322,14 @@ export default function OverviewTab({ tender, onUpdate, allUsers, userMap }: Pro
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center' }}>
             <Button type="button" variant="secondary" loading={screenBusy} onClick={runScreening}>
-              Screening (5 criteria) uitvoeren
+              Screening &amp; concurrentie uitvoeren
             </Button>
             <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              Schrijft go/no-go score naar de tender en werkt Go/No-Go motivering bij.
+              Beoordeelt 6 criteria (competentie, referenties, marge, capaciteit, concurrentie, winskans) en schrijft go/no-go + winskans.
             </span>
           </div>
           {tender.goNoGoScore && typeof tender.goNoGoScore === 'object' && (
-            <pre
-              style={{
-                fontSize: 11,
-                background: '#f9fafb',
-                padding: 10,
-                borderRadius: 4,
-                overflow: 'auto',
-                maxHeight: 200,
-                margin: 0,
-              }}
-            >
-              {JSON.stringify(tender.goNoGoScore, null, 2)}
-            </pre>
+            <ScreeningCard score={tender.goNoGoScore as Record<string, unknown>} />
           )}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <div>
