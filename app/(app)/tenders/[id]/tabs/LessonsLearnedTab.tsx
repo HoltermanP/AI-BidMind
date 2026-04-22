@@ -36,6 +36,90 @@ interface Props {
   onEvalComplete?: () => void | Promise<void>
 }
 
+function ScoreVergelijking({ data }: { data: Record<string, unknown> }) {
+  const fmt = (v: unknown) => (v == null || v === '') ? '—' : String(v)
+  const rows = [
+    { label: 'Prijs',     eigen: data.eigen_prijs,     winnaar: data.winnaar_prijs },
+    { label: 'Kwaliteit', eigen: data.eigen_kwaliteit, winnaar: data.winnaar_kwaliteit },
+    { label: 'Totaal',    eigen: data.totaal_eigen,    winnaar: data.totaal_winnaar },
+  ].filter(r => r.eigen != null || r.winnaar != null)
+
+  if (rows.length === 0) return null
+
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 8, color: 'var(--navy)' }}>Scorevergelijking</span>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr>
+            <th style={{ textAlign: 'left', padding: '6px 10px', background: '#F3F4F6', fontWeight: 600, color: 'var(--muted)', borderRadius: '4px 0 0 4px' }}></th>
+            <th style={{ textAlign: 'right', padding: '6px 10px', background: '#F3F4F6', fontWeight: 600, color: 'var(--navy)' }}>Eigen inschrijving</th>
+            <th style={{ textAlign: 'right', padding: '6px 10px', background: '#F3F4F6', fontWeight: 600, color: 'var(--navy)', borderRadius: '0 4px 4px 0' }}>Winnaar</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => {
+            const isTotal = r.label === 'Totaal'
+            return (
+              <tr key={r.label} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                <td style={{ padding: '7px 10px', fontWeight: isTotal ? 700 : 400, color: 'var(--text-secondary)' }}>{r.label}</td>
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: isTotal ? 700 : 400, fontFamily: 'IBM Plex Mono, monospace', color: 'var(--navy)' }}>{fmt(r.eigen)}</td>
+                <td style={{ padding: '7px 10px', textAlign: 'right', fontWeight: isTotal ? 700 : 400, fontFamily: 'IBM Plex Mono, monospace', color: '#059669' }}>{fmt(r.winnaar)}</td>
+              </tr>
+            )
+          })}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function BezwaarCheck({ data }: { data: Record<string, unknown> }) {
+  const foutColors: Record<string, { bg: string; color: string; label: string }> = {
+    ja:         { bg: '#FEE2E2', color: '#991B1B', label: 'Ja' },
+    nee:        { bg: '#D1FAE5', color: '#065F46', label: 'Nee' },
+    onduidelijk:{ bg: '#FEF3C7', color: '#92400E', label: 'Onduidelijk' },
+  }
+
+  const procFout = String(data.procedurele_fout ?? '').toLowerCase()
+  const inhFout  = String(data.inhoudelijke_fout ?? '').toLowerCase()
+  const advies   = typeof data.advies === 'string' ? data.advies : null
+
+  const Badge = ({ val }: { val: string }) => {
+    const c = foutColors[val] ?? { bg: '#F3F4F6', color: 'var(--muted)', label: val || '—' }
+    return (
+      <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 10px', borderRadius: 20, background: c.bg, color: c.color }}>
+        {c.label}
+      </span>
+    )
+  }
+
+  return (
+    <div>
+      <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 8, color: 'var(--navy)' }}>Bezwaar-check</span>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: advies ? 10 : 0 }}>
+        {procFout && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Procedurele fout</span>
+            <Badge val={procFout} />
+          </div>
+        )}
+        {inhFout && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            <span style={{ fontSize: 10, color: 'var(--muted)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Inhoudelijke fout</span>
+            <Badge val={inhFout} />
+          </div>
+        )}
+      </div>
+      {advies && (
+        <p style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.55, margin: 0, padding: '10px 12px', background: '#F9FAFB', borderRadius: 4, borderLeft: '3px solid var(--border)' }}>
+          {advies}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export default function LessonsLearnedTab({
   tenderId,
   documents,
@@ -146,20 +230,10 @@ export default function LessonsLearnedTab({
             </div>
           )}
           {evaluatieScoreVergelijkingJson && Object.keys(evaluatieScoreVergelijkingJson).length > 0 && (
-            <div style={{ marginBottom: 12 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Scorevergelijking</span>
-              <pre style={{ fontSize: 11, margin: 0, padding: 10, background: '#f9fafb', borderRadius: 4, overflow: 'auto' }}>
-                {JSON.stringify(evaluatieScoreVergelijkingJson, null, 2)}
-              </pre>
-            </div>
+            <ScoreVergelijking data={evaluatieScoreVergelijkingJson} />
           )}
           {evaluatieBezwaarCheckJson && Object.keys(evaluatieBezwaarCheckJson).length > 0 && (
-            <div>
-              <span style={{ fontSize: 12, fontWeight: 600, display: 'block', marginBottom: 6 }}>Bezwaar-check</span>
-              <pre style={{ fontSize: 11, margin: 0, padding: 10, background: '#f9fafb', borderRadius: 4, overflow: 'auto' }}>
-                {JSON.stringify(evaluatieBezwaarCheckJson, null, 2)}
-              </pre>
-            </div>
+            <BezwaarCheck data={evaluatieBezwaarCheckJson} />
           )}
         </div>
       )}
