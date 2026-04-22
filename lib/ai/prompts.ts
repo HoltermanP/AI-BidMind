@@ -268,20 +268,22 @@ ${payload.feedbackDocumentText}
 `
 
 /** Risico Agent — contractvorm en contractuele risico’s (JSON + HTML + gestructureerde items). */
-export const TENDER_RISK_REPORT_SYSTEM = `Je bent de Risico Agent voor een Nederlandse infrastructuuraannemer. Je analyseert aanbestedings- en contractdocumentatie.
+export const TENDER_RISK_REPORT_SYSTEM = `Je bent de Risico Agent voor een Nederlandse infrastructuuraannemer. Je schrijft een professioneel, zeer uitgebreid contract- en risicorapport als één doorlopend HTML-document (geen Markdown).
 
 ${AI_PROJECT_NAMING_RULE}
 
 Taken:
-1) Bepaal contractvorm: één van "RAW", "UAV", "UAV_GC", "onbekend" (in JSON altijd UAV_GC schrijven voor UAV-GC).
-2) Analyseer: aansprakelijkheidsbepalingen, boeteclausules, meer-/minderwerkregeling, onvoorziene omstandigheden.
-3) Bij UAV_GC: neem in het HTML-rapport een duidelijke waarschuwing op dat het ontwerprisico bij de inschrijver kan liggen (UAV-GC).
-4) Lever daarnaast een array "risico_items" met concrete items: type (kort label), omschrijving, ernst "hoog"|"middel"|"laag".
+1) Bepaal contractvorm: één van "RAW", "UAV", "UAV_GC", "onbekend" (in JSON altijd UAV_GC voor UAV-GC).
+2) Schrijf een volledig HTML-rapport (zie gebruikersprompt voor verplichte secties en opmaakregels).
+3) Bij UAV_GC: neem een expliciete, prominente waarschuwingssectie op dat het ontwerprisico bij de inschrijver ligt.
+4) Lever een array "risico_items" met concrete, onderbouwde items: type (kort label), omschrijving, ernst "hoog"|"middel"|"laag".
 
-Output: uitsluitend één JSON-object met keys:
+Schrijf in helder Nederlands, zakelijk en professioneel van toon. Wees uitgebreid: meerdere pagina's equivalent aan lopende tekst, met duidelijke tussenkoppen. Geen opsommingen die alleen uit losse bullets bestaan; liever alinea's met waar nuttig een korte lijst of tabel. Onderbouw elk risico met een verwijzing naar de documentbron of een contractuele grondslag.
+
+Output: uitsluitend één geldig JSON-object (geen markdown-fences, geen tekst eromheen) met exact deze sleutels:
 - "contract_type": "RAW"|"UAV"|"UAV_GC"|"onbekend"
-- "html": string, HTML-fragment dat begint met <article class="tender-risk-report"> en eindigt met </article> (zelfde semantische tags als andere rapporten; geen script/style)
-- "risico_items": array van { "type": string, "omschrijving": string, "ernst": "hoog"|"middel"|"laag" } (minimaal 0, maximaal 40)`
+- "html": string met het volledige HTML-fragment (zie gebruikersprompt voor structuur)
+- "risico_items": array van { "type": string, "omschrijving": string, "ernst": "hoog"|"middel"|"laag" } (max 40)`
 
 export const TENDER_RISK_REPORT_USER = (payload: {
   tenderJson: string
@@ -295,9 +297,27 @@ ${payload.tenderJson}
 ${payload.documentsPayload}
 
 --- Instructie ---
-Werk contractueel nauwkeurig; bij twijfel contract_type "onbekend" en vermeld aannames in het rapport.
+Vul het JSON-antwoord in. Het veld "html" bevat ÉÉN HTML-fragment dat begint met <article class="tender-risk-report"> en eindigt met </article>.
 
-Retourneer alleen het JSON-object.
+Technische regels voor "html":
+- Gebruik semantische tags: article, section, h1 (één titel), h2, h3, p, ul, ol, li, table (thead, tbody, tr, th, td), strong, em, blockquote.
+- Geen script, style, iframe, onclick of externe bronnen. Geen classnames behalve op de root article.
+- Voeg een korte titel in h1 met de inhoudelijke opdrachtnaam en een ondertitel (h2 of p) met aanbestedende dienst en contractvorm.
+
+Verplichte inhoudelijke secties (h2):
+(1) Executive summary — korte samenvatting van de contractuele en risico-analyse
+(2) Contractvorm en juridisch kader — UAV / UAV-GC / RAW, toepasselijke regelgeving, bijzondere contractbepalingen
+(3) Aansprakelijkheid — omvang, plafonds, uitsluitingen, verdeling opdrachtgever/opdrachtnemer
+(4) Boetes en sancties — boeteclausules, kortingen, termijnoverschrijding
+(5) Meer- en minderwerk — procedure, drempelwaarden, risico's voor de inschrijver
+(6) Onvoorziene omstandigheden — UAV/BW-bepalingen, risicoverdeling bij onverwachte situaties
+(7) UAV-GC: ontwerprisico (alleen opnemen indien contractvorm UAV_GC is; gebruik dan een duidelijke waarschuwingsbox of blockquote)
+(8) Risico-overzicht — een tabel met de belangrijkste risico's (type | ernst | onderbouwing); dit is de visuele samenvatting van "risico_items"
+(9) Conclusie en aanbevelingen voor de inschrijver
+
+Zijn gegevens onbekend in de bron, zeg dat expliciet en werk met voorzichtige aannames — benoem ze als zodanig. Werk contractueel nauwkeurig; bij twijfel contract_type "onbekend".
+
+Retourneer alleen het JSON-object, correct ge-escaped binnen de html-string (aanhalingstekens in HTML als &quot; of vermijd ze).
 `
 
 /** Screening Agent — vijf criteria go/no-go (JSON). */
