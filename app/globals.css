@@ -1374,7 +1374,7 @@ input, textarea, select {
 
 }
 
-/* Tenderanalyse & Review: HTML-rapporten (Analyse Agent / Review Agent) */
+/* Tenderanalyse, Review & Risicorapport: HTML-rapporten */
 .tender-analysis-print-root,
 .tender-review-print-root {
   background: white;
@@ -1386,7 +1386,8 @@ input, textarea, select {
 }
 
 article.tender-analysis-report,
-article.tender-review-report {
+article.tender-review-report,
+article.tender-risk-report {
   font-family: 'IBM Plex Sans', system-ui, sans-serif;
   font-size: 14px;
   line-height: 1.65;
@@ -1394,7 +1395,8 @@ article.tender-review-report {
 }
 
 article.tender-analysis-report h1,
-article.tender-review-report h1 {
+article.tender-review-report h1,
+article.tender-risk-report h1 {
   font-family: var(--font-heading);
   font-size: 1.75rem;
   font-weight: 700;
@@ -1404,7 +1406,8 @@ article.tender-review-report h1 {
 }
 
 article.tender-analysis-report h2,
-article.tender-review-report h2 {
+article.tender-review-report h2,
+article.tender-risk-report h2 {
   font-family: var(--font-heading);
   font-size: 1.2rem;
   font-weight: 700;
@@ -1415,7 +1418,8 @@ article.tender-review-report h2 {
 }
 
 article.tender-analysis-report h3,
-article.tender-review-report h3 {
+article.tender-review-report h3,
+article.tender-risk-report h3 {
   font-family: var(--font-heading);
   font-size: 1.05rem;
   font-weight: 600;
@@ -1424,25 +1428,30 @@ article.tender-review-report h3 {
 }
 
 article.tender-analysis-report p,
-article.tender-review-report p {
+article.tender-review-report p,
+article.tender-risk-report p {
   margin: 0 0 12px;
 }
 
 article.tender-analysis-report ul,
 article.tender-analysis-report ol,
 article.tender-review-report ul,
-article.tender-review-report ol {
+article.tender-review-report ol,
+article.tender-risk-report ul,
+article.tender-risk-report ol {
   margin: 0 0 14px 1.2em;
   padding: 0;
 }
 
 article.tender-analysis-report li,
-article.tender-review-report li {
+article.tender-review-report li,
+article.tender-risk-report li {
   margin-bottom: 6px;
 }
 
 article.tender-analysis-report table,
-article.tender-review-report table {
+article.tender-review-report table,
+article.tender-risk-report table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
@@ -1452,7 +1461,9 @@ article.tender-review-report table {
 article.tender-analysis-report th,
 article.tender-analysis-report td,
 article.tender-review-report th,
-article.tender-review-report td {
+article.tender-review-report td,
+article.tender-risk-report th,
+article.tender-risk-report td {
   border: 1px solid var(--border);
   padding: 8px 10px;
   text-align: left;
@@ -1460,7 +1471,8 @@ article.tender-review-report td {
 }
 
 article.tender-analysis-report th,
-article.tender-review-report th {
+article.tender-review-report th,
+article.tender-risk-report th {
   background: #f8fafc;
   font-weight: 600;
   font-family: var(--font-heading);
@@ -1468,7 +1480,8 @@ article.tender-review-report th {
 }
 
 article.tender-analysis-report blockquote,
-article.tender-review-report blockquote {
+article.tender-review-report blockquote,
+article.tender-risk-report blockquote {
   margin: 12px 0 16px;
   padding: 10px 14px;
   border-left: 4px solid var(--amber-muted);
