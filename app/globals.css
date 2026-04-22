@@ -1430,7 +1430,14 @@ article.tender-risk-report h3 {
 article.tender-analysis-report p,
 article.tender-review-report p,
 article.tender-risk-report p {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
+}
+
+/* Section elements get clear breathing room */
+article.tender-analysis-report section,
+article.tender-review-report section,
+article.tender-risk-report section {
+  margin-bottom: 32px;
 }
 
 article.tender-analysis-report ul,
@@ -1439,14 +1446,35 @@ article.tender-review-report ul,
 article.tender-review-report ol,
 article.tender-risk-report ul,
 article.tender-risk-report ol {
-  margin: 0 0 14px 1.2em;
-  padding: 0;
+  margin: 0 0 16px 0;
+  padding: 0 0 0 1.4em;
 }
 
 article.tender-analysis-report li,
 article.tender-review-report li,
 article.tender-risk-report li {
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+/* Styled bullets for unordered lists */
+article.tender-analysis-report ul li,
+article.tender-review-report ul li,
+article.tender-risk-report ul li {
+  list-style: none;
+  position: relative;
+  padding-left: 0.4em;
+}
+
+article.tender-analysis-report ul li::before,
+article.tender-review-report ul li::before,
+article.tender-risk-report ul li::before {
+  content: '▸';
+  position: absolute;
+  left: -1.2em;
+  color: var(--slate-blue);
+  font-size: 0.85em;
+  top: 0.1em;
 }
 
 article.tender-analysis-report table,
@@ -1455,7 +1483,10 @@ article.tender-risk-report table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
-  margin: 12px 0 20px;
+  margin: 16px 0 24px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 article.tender-analysis-report th,
@@ -1464,8 +1495,9 @@ article.tender-review-report th,
 article.tender-review-report td,
 article.tender-risk-report th,
 article.tender-risk-report td {
-  border: 1px solid var(--border);
-  padding: 8px 10px;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  padding: 10px 14px;
   text-align: left;
   vertical-align: top;
 }
@@ -1473,21 +1505,45 @@ article.tender-risk-report td {
 article.tender-analysis-report th,
 article.tender-review-report th,
 article.tender-risk-report th {
-  background: #f8fafc;
+  background: var(--navy);
+  color: white;
   font-weight: 600;
   font-family: var(--font-heading);
   font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* Zebra rows */
+article.tender-analysis-report tbody tr:nth-child(even),
+article.tender-review-report tbody tr:nth-child(even),
+article.tender-risk-report tbody tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+article.tender-analysis-report tbody tr:last-child td,
+article.tender-review-report tbody tr:last-child td,
+article.tender-risk-report tbody tr:last-child td {
+  border-bottom: none;
 }
 
 article.tender-analysis-report blockquote,
 article.tender-review-report blockquote,
 article.tender-risk-report blockquote {
-  margin: 12px 0 16px;
-  padding: 10px 14px;
+  margin: 16px 0 20px;
+  padding: 14px 18px;
   border-left: 4px solid var(--amber-muted);
-  background: #fffafb;
+  background: #fffbea;
   color: var(--text-secondary);
+  border-radius: 0 6px 6px 0;
+  font-size: 13.5px;
+  line-height: 1.65;
 }
+
+/* Risk-severity pill styling — used in risk overview table cells */
+article.tender-risk-report td span.ernst-hoog  { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; background:#FEE2E2; color:#991B1B; }
+article.tender-risk-report td span.ernst-middel { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; background:#FEF3C7; color:#92400E; }
+article.tender-risk-report td span.ernst-laag   { display:inline-block; padding:2px 10px; border-radius:20px; font-size:11px; font-weight:700; background:#D1FAE5; color:#065F46; }
 
 /* NVI-rapport: zelfde article + print-kader als tenderanalyse; extra kaarten en prioriteitspillen */
 article.tender-analysis-report.tender-nvi-report .tender-nvi-report-header {

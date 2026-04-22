@@ -307,21 +307,26 @@ Vul het JSON-antwoord in. Het veld "html" bevat ÉÉN HTML-fragment dat begint m
 
 Technische regels voor "html":
 - Gebruik semantische tags: article, section, h1 (één titel), h2, h3, p, ul, ol, li, table (thead, tbody, tr, th, td), strong, em, blockquote.
-- Geen script, style, iframe, onclick of externe bronnen. Geen classnames behalve op de root article.
-- Voeg een korte titel in h1 met de inhoudelijke opdrachtnaam en een ondertitel (h2 of p) met aanbestedende dienst en contractvorm.
+- Wikkel elke h2-sectie in een <section>-element voor visuele adembehoefte: <section><h2>...</h2>...</section>.
+- Toegestane classnames: root article ("tender-risk-report"), ernst-spans in de risicokolom ("ernst-hoog", "ernst-middel", "ernst-laag"). Geen andere classes.
+- Voeg een korte titel in h1 met de inhoudelijke opdrachtnaam. Gebruik daarna een <p><strong>Aanbestedende dienst:</strong> ... · <strong>Contractvorm:</strong> ...</p> als subtitelregel (GEEN extra h2 direct na h1).
 
-Verplichte inhoudelijke secties (h2):
-(1) Executive summary — korte samenvatting van de contractuele en risico-analyse
-(2) Contractvorm en juridisch kader — UAV / UAV-GC / RAW, toepasselijke regelgeving, bijzondere contractbepalingen
-(3) Aansprakelijkheid — omvang, plafonds, uitsluitingen, verdeling opdrachtgever/opdrachtnemer
-(4) Boetes en sancties — boeteclausules, kortingen, termijnoverschrijding
-(5) Meer- en minderwerk — procedure, drempelwaarden, risico's voor de inschrijver
-(6) Onvoorziene omstandigheden — UAV/BW-bepalingen, risicoverdeling bij onverwachte situaties
-(7) UAV-GC: ontwerprisico (alleen opnemen indien contractvorm UAV_GC is; gebruik dan een duidelijke waarschuwingsbox of blockquote)
-(8) Risico-overzicht — een tabel met de belangrijkste risico's (type | ernst | onderbouwing); dit is de visuele samenvatting van "risico_items"
-(9) Conclusie en aanbevelingen voor de inschrijver
+Verplichte inhoudelijke secties (h2), elk in een <section>:
+(1) Executive summary — 2–3 alinea's: wat is de kern van het contract, de grootste risico's, het overall beeld voor de inschrijver.
+(2) Contractvorm en juridisch kader — UAV / UAV-GC / RAW, toepasselijke regelgeving, bijzondere contractbepalingen. Gebruik een tabel als er meerdere relevante regelingen zijn (kolommen: Regeling | Relevantie | Aandachtspunt).
+(3) Aansprakelijkheid — omvang, plafonds, uitsluitingen, verdeling opdrachtgever/opdrachtnemer. Gebruik een tabel voor overzichtelijkheid wanneer er meerdere aspecten zijn.
+(4) Boetes en sancties — boeteclausules, kortingen, termijnoverschrijding. Noem concrete bedragen of percentages als die in de bron staan.
+(5) Meer- en minderwerk — procedure, drempelwaarden, risico's voor de inschrijver.
+(6) Onvoorziene omstandigheden — UAV/BW-bepalingen, risicoverdeling bij onverwachte situaties.
+(7) UAV-GC: ontwerprisico — alleen opnemen indien contractvorm UAV_GC is. Gebruik een <blockquote> als waarschuwingsblok; leg uit dat het ontwerprisico volledig bij de inschrijver ligt en wat dat concreet betekent voor meerwerk, revisies en aansprakelijkheid.
+(8) Risico-overzicht — een tabel met de belangrijkste risico's. Kolommen: Risicotype | Ernst | Onderbouwing. In de Ernst-kolom: gebruik <span class="ernst-hoog">hoog</span>, <span class="ernst-middel">middel</span> of <span class="ernst-laag">laag</span>.
+(9) Conclusie en aanbevelingen — 2–3 concrete punten die de inschrijver vóór indiening moet adresseren.
 
-Zijn gegevens onbekend in de bron, zeg dat expliciet en werk met voorzichtige aannames — benoem ze als zodanig. Werk contractueel nauwkeurig; bij twijfel contract_type "onbekend".
+Schrijfregels:
+- Elke sectie bevat minimaal één alinea met lopende tekst, gevolgd door een tabel of lijst waar dat de leesbaarheid vergroot.
+- Geen secties die alleen uit bullets bestaan; bullets zijn aanvulling op, niet vervanging van, alineatekst.
+- Zijn gegevens onbekend, zeg dat expliciet en maak een voorzichtige aanname — benoem die als zodanig.
+- Werk contractueel nauwkeurig; bij twijfel contract_type "onbekend".
 
 Retourneer alleen het JSON-object, correct ge-escaped binnen de html-string (aanhalingstekens in HTML als &quot; of vermijd ze).
 `
