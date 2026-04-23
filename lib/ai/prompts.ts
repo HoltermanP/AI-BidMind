@@ -203,7 +203,8 @@ export const SECTION_WRITING_USER = (
   requirements: string[],
   documentContext: string,
   companyContext?: string,
-  lessonsLearnedContext?: string
+  lessonsLearnedContext?: string,
+  sectionTypeInstruction?: string,
 ) => `
 ${companyContext ? `${companyContext}\n\n` : ''}Schrijf een ZEER UITGEBREID document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud expliciet op de beschikbare aanbestedingsdocumenten (samenvattingen, eisen, gunningscriteria en risico's) én op de bedrijfscontext hierboven, zodat de aanbieding maatwerk is voor dit bedrijf.
 
@@ -219,7 +220,7 @@ ${requirements.length ? requirements.map((r, i) => `${i + 1}. ${r}`).join('\n') 
 
 --- Uitgebreide context uit de aanbestedingsdocumenten ---
 ${documentContext}
-${lessonsLearnedContext ? `\n--- Leerpunten uit eerdere aanbestedingen (vermijd herhaling van bekende fouten; pas toe waar inhoudelijk relevant) ---\n${lessonsLearnedContext}\n` : ''}
+${lessonsLearnedContext ? `\n--- Leerpunten uit eerdere aanbestedingen (vermijd herhaling van bekende fouten; pas toe waar inhoudelijk relevant) ---\n${lessonsLearnedContext}\n` : ''}${sectionTypeInstruction ? `\n--- Specifieke instructies voor dit sectietype ---\n${sectionTypeInstruction}\n` : ''}
 --- Instructie ---
 Schrijf een volledig, goed gestructureerd document in Markdown:
 - Gebruik ## voor hoofdkopjes en ### voor subkopjes voor structuur.
@@ -229,6 +230,57 @@ Schrijf een volledig, goed gestructureerd document in Markdown:
 - Wees uitvoerig en beschrijvend: meerdere pagina's inhoud is gewenst (richtlijn: minimaal 1000–2000 woorden, meer mag voor complexe secties). Hoe uitgebreider en toelichtender, hoe beter.
 - Lever het document altijd volledig af: sluit af met een duidelijke afronding (slot of conclusie). Geen afkappen halverwege; schrijf door tot alle onderdelen behandeld zijn.
 - Geen placeholdertekst; alleen bruikbare, inhoudelijke en beschrijvende tekst.
+`
+
+/** Extra instructie die alleen bij prijs_onderbouwing-secties wordt meegegeven. */
+export const PRICE_SECTION_INSTRUCTION = (ctx: {
+  estimatedValue?: string | null
+  kostenRaming?: string | null
+  margePercentage?: string | null
+  prijsInschrijving?: string | null
+  procedureType?: string | null
+}) => `
+Dit is een PRIJSONDERBOUWING-sectie. Verplichte structuur:
+
+## 1. Inschrijfprijs en kostenopbouw (tabel verplicht)
+Lever een overzichtstabel met de kostenopbouw. Gebruik de onderstaande tender-specifieke getallen als ze beschikbaar zijn; schat de rest redelijk in op basis van sector, opdrachtomvang en documentcontext.
+
+| Kostenpost | Omschrijving | Bedrag (€) |
+|---|---|---|
+| Directe kosten | Arbeidskosten, materiaal, onderaannemers | … |
+| Indirecte kosten | Overhead, mobilisatie, managementkosten | … |
+| Risicoreservering | Buffer voor onvoorziene omstandigheden | … |
+| Nettoprijs (exclusief marge) | | … |
+| Marge / winst | Zie toelichting hieronder | … |
+| **Inschrijfprijs (excl. BTW)** | | **…** |
+
+Tender-specifieke referentiegetallen (gebruik deze als de basis en leg uit hoe ze zijn opgebouwd):
+${ctx.estimatedValue ? `- Geraamde waarde opdrachtgever: €${ctx.estimatedValue}` : '- Geraamde waarde: niet beschikbaar; schat marktconform in op basis van scope.'}
+${ctx.kostenRaming ? `- Eigen kostenraming: €${ctx.kostenRaming}` : '- Eigen kostenraming: niet ingevuld; maak een plausibele schatting.'}
+${ctx.margePercentage ? `- Beoogde marge: ${ctx.margePercentage}%` : '- Marge: niet opgegeven; gebruik een marktconforme marge (doorgaans 5–15% afhankelijk van type opdracht).'}
+${ctx.prijsInschrijving ? `- Inschrijfprijs: €${ctx.prijsInschrijving}` : '- Inschrijfprijs: niet ingevuld; bereken op basis van raming + marge.'}
+
+## 2. Marktconforme tarieven (tabel verplicht)
+Lever een tabel met marktconforme uurtarieven voor de rollen die naar alle waarschijnlijkheid nodig zijn voor deze opdracht. Baseer de rolkeuze op de documentcontext en het type opdracht. Gebruik reële Nederlandse markttarieven exclusief BTW.
+
+| Rol / Functie | Niveau | Marktconform tarief (€/uur) | Indicatief aantal uren | Indicatief bedrag (€) |
+|---|---|---|---|---|
+| … | Senior/Medior/Junior | … | … | … |
+
+Richtlijn markttarieven (excl. BTW, referentiejaar 2025–2026):
+- Projectmanager / opdrachtnemer senior: €110–150/u
+- Projectleider medior: €85–115/u
+- Specialist / adviseur senior: €100–145/u
+- Consultant / uitvoerder medior: €75–100/u
+- Uitvoerend medewerker junior: €55–80/u
+- Ondersteuning / administratie: €45–65/u
+Pas aan op basis van de specifieke sector en schaarse competenties in de documentcontext.
+
+## 3. Margeonderbouwing
+Leg de keuze voor de marge uit: welke risico's worden ingeprijsd, welke marktdruk speelt er, hoe verhoudt de prijs zich tot de geraamde waarde van de opdrachtgever. Waarschuw expliciet als de inschrijfprijs meer dan 25% afwijkt van de geraamde waarde.
+
+## 4. Prijsstrategie en concurrentiepositie
+Benoem de prijsstrategie: prijsconcurrerend, kwaliteitsgericht, of gebalanceerd. Leg uit hoe de prijs-kwaliteitsverhouding scoort op de gunningscriteria en hoe dit de winkansen beïnvloedt.
 `
 
 /** Evaluatie Agent: officiële terugkoppeling → concrete leerpunten voor de lessons_learned-tabel. */
