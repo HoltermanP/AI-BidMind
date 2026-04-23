@@ -190,11 +190,21 @@ Documentsamenvatttingen:
 ${summaries}
 `
 
-export const SECTION_WRITING_SYSTEM = `Je bent een expert inschrijvingsschrijver voor Nederlandse aanbestedingen. Je schrijft zeer uitgebreide, professionele aanbiedingsdocumenten in het Nederlands. Elk document is gebaseerd op de beschikbare aanbestedingsdocumenten en sluit nauw aan op de eisen, gunningscriteria en risico's.
+export const SECTION_WRITING_SYSTEM = `Je bent een expert inschrijvingsschrijver voor Nederlandse aanbestedingen. Je schrijft professionele, inhoudelijk sterke aanbiedingsdocumenten in het Nederlands die geloofwaardig en realistisch zijn.
 
 ${AI_PROJECT_NAMING_RULE}
 
-Stijl: Schrijf in de eerste plaats beschrijvend en narratief. Gebruik uitgebreide alinea's met lopende tekst die onderwerpen uitleggen, onderbouwen en toelichten. Vermijd korte bullet- of genummerde opsommingen waar hetzelfde in vloeiende zinnen kan worden gezegd. Gebruik kopjes (##, ###) voor structuur; gebruik alleen bullets of genummerde lijsten wanneer een echte opsomming noodzakelijk is (bijv. concrete deliverables of stappen in een proces). Tabellen zijn toegestaan waar ze informatie helder maken. Schrijf concreet, specifiek en overtuigend, met voldoende toelichting en context in lopende tekst.`
+Toon en stijl — dit zijn harde grenzen:
+- Schrijf no-nonsense en feitelijk. Geen superlatieven, geen lege claims, geen managementtaal als "synergie", "state-of-the-art", "proactief", "gedreven", "passie", "excellentie", "hands-on mentaliteit", "toegevoegde waarde creëren" of vergelijkbare holle frases.
+- Elke bewering moet worden gestaafd met een concrete aanpak, methode, referentie of getal. Geen retorische beloften die nergens op gestoeld zijn.
+- Vermijd overdreven positief taalgebruik ("de beste", "uniek", "ongeëvenaard"). Schrijf vanuit een eerlijke, zelfverzekerde positie: dit is hoe wij het aanpakken en waarom dat werkt.
+- Wees realistisch over risico's en onzekerheden. Een aanbieding die risico's erkent en er een werkende aanpak voor geeft, is geloofwaardiger dan een die alles gladstrijkt.
+- Kies voor directe, actieve zinnen. Vermijd passieve constructies die verantwoordelijkheid verdoezelen ("er zal aandacht worden besteed aan...").
+
+Structuur:
+- Gebruik ## voor hoofdkopjes en ### voor subkopjes.
+- Schrijf in lopende tekst, niet in bullet-lijsten. Bullets zijn toegestaan voor echte opsommingen (concrete stappen, deliverables, eisen) — niet als vervanging van een alinea.
+- Tabellen zijn goed voor vergelijkingen, tarievenlijsten en overzichten; gebruik ze dan ook.`
 
 export const SECTION_WRITING_USER = (
   sectionType: string,
@@ -206,9 +216,9 @@ export const SECTION_WRITING_USER = (
   lessonsLearnedContext?: string,
   sectionTypeInstruction?: string,
 ) => `
-${companyContext ? `${companyContext}\n\n` : ''}Schrijf een ZEER UITGEBREID document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud expliciet op de beschikbare aanbestedingsdocumenten (samenvattingen, eisen, gunningscriteria en risico's) én op de bedrijfscontext hierboven, zodat de aanbieding maatwerk is voor dit bedrijf.
+${companyContext ? `${companyContext}\n\n` : ''}Schrijf een inhoudelijk sterk en volledig document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud uitsluitend op de beschikbare aanbestedingsdocumenten en bedrijfscontext — verzin geen feiten die er niet in staan.
 
-KRITISCH — schrijfperspectief: formuleer overtuigend wat de OPDRACHTGEVER wint (resultaat, risicoverlaging, kwaliteit, planningsszekerheid, compliance, lifecycle-waarde). Beschrijf niet primair "wat wij doen" als proceslijst, maar welk effect en welke waarde dat voor de opdrachtgever en eindgebruikers oplevert. Het inschrijvers-perspectief mag ter onderbouwing, maar de rode draad is opdrachtgever-waarde.
+Schrijfperspectief: beschrijf concreet wát de inschrijver doet, hóe dat werkt en welk resultaat dat de opdrachtgever oplevert. Geen abstracte meerwaardeclaims zonder onderbouwing. Elke bewering over kwaliteit, aanpak of competentie moet worden toegelicht met een methode, werkwijze, maatstaf of voorbeeld.
 
 --- Aanbesteding ---
 Titel (officiële naam; geen formuliercodes als projectnaam): ${tenderTitle}
@@ -223,13 +233,12 @@ ${documentContext}
 ${lessonsLearnedContext ? `\n--- Leerpunten uit eerdere aanbestedingen (vermijd herhaling van bekende fouten; pas toe waar inhoudelijk relevant) ---\n${lessonsLearnedContext}\n` : ''}${sectionTypeInstruction ? `\n--- Specifieke instructies voor dit sectietype ---\n${sectionTypeInstruction}\n` : ''}
 --- Instructie ---
 Schrijf een volledig, goed gestructureerd document in Markdown:
-- Gebruik ## voor hoofdkopjes en ### voor subkopjes voor structuur.
-- Schrijf vooral in uitgebreide, beschrijvende alinea's (lopende tekst). Leg onderwerpen uit, onderbouw keuzes en geef toelichting in volledige zinnen. Vermijd korte opsommingen; kies voor narratieve, vloeiende tekst.
-- Gebruik bullets (-) of genummerde lijsten alleen wanneer een echte opsomming nodig is (bijv. een vast aantal concrete stappen of deliverables). Geen lange bullet-lijsten waar paragrafen passender zijn.
-- Geef concrete voorbeelden, maatregelen en toelichtingen die aansluiten op de eisen en criteria hierboven, bij voorkeur in lopende tekst.
-- Wees uitvoerig en beschrijvend: meerdere pagina's inhoud is gewenst (richtlijn: minimaal 1000–2000 woorden, meer mag voor complexe secties). Hoe uitgebreider en toelichtender, hoe beter.
-- Lever het document altijd volledig af: sluit af met een duidelijke afronding (slot of conclusie). Geen afkappen halverwege; schrijf door tot alle onderdelen behandeld zijn.
-- Geen placeholdertekst; alleen bruikbare, inhoudelijke en beschrijvende tekst.
+- Gebruik ## voor hoofdkopjes en ### voor subkopjes.
+- Schrijf in alinea's met lopende tekst. Leg aan, onderbouw keuzes en beschrijf de aanpak in volledige zinnen. Bullets alleen voor echte opsommingen (stappen, deliverables, concrete eisen) — niet als vervanging van een alinea.
+- Onderbouw elke claim: zeg niet "wij leveren kwaliteit" maar leg uit hoe kwaliteitsborging werkt, wie verantwoordelijk is en hoe dat wordt gecontroleerd.
+- Omvang: zo lang als nodig om alle relevante onderdelen dekkend te behandelen (minimaal 800 woorden voor eenvoudige, 1500+ voor complexe secties). Kwaliteit boven kwantiteit.
+- Sluit het document af met een afrondende alinea. Geen onafgemaakte tekst.
+- Geen placeholder of invul-instructietekst in het eindproduct.
 `
 
 /** Extra instructie die alleen bij prijs_onderbouwing-secties wordt meegegeven. */
