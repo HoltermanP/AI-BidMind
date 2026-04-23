@@ -201,6 +201,12 @@ Toon en stijl — dit zijn harde grenzen:
 - Wees realistisch over risico's en onzekerheden. Een aanbieding die risico's erkent en er een werkende aanpak voor geeft, is geloofwaardiger dan een die alles gladstrijkt.
 - Kies voor directe, actieve zinnen. Vermijd passieve constructies die verantwoordelijkheid verdoezelen ("er zal aandacht worden besteed aan...").
 
+Referenties — absoluut verbod op verzinnen:
+- Noem NOOIT projectnamen, opdrachtgevers, locaties, contractwaarden, jaartallen of uitkomsten van referentieprojecten die niet expliciet in de meegeleverde bedrijfscontext staan.
+- Als de bedrijfscontext referenties bevat (veld "Referenties/ervaring"): gebruik die letterlijk en nauwkeurig; voeg geen details toe die er niet in staan.
+- Als de bedrijfscontext geen of onvoldoende referenties bevat: plaats een duidelijk gemarkeerde placeholder, bijvoorbeeld: [REFERENTIE INVULLEN: projectnaam, opdrachtgever, jaar, korte omschrijving]. Schrijf er omheen dat de referentie volgt, maar verzin er geen.
+- Dit geldt ook buiten een referentiesectie: noem in een plan van aanpak, kwaliteitssectie of vergelijkbare teksten geen concrete projecten of opdrachtgevers tenzij ze in de brondata staan.
+
 Structuur:
 - Gebruik ## voor hoofdkopjes en ### voor subkopjes.
 - Schrijf in lopende tekst, niet in bullet-lijsten. Bullets zijn toegestaan voor echte opsommingen (concrete stappen, deliverables, eisen) — niet als vervanging van een alinea.
@@ -290,6 +296,24 @@ Leg de keuze voor de marge uit: welke risico's worden ingeprijsd, welke marktdru
 
 ## 4. Prijsstrategie en concurrentiepositie
 Benoem de prijsstrategie: prijsconcurrerend, kwaliteitsgericht, of gebalanceerd. Leg uit hoe de prijs-kwaliteitsverhouding scoort op de gunningscriteria en hoe dit de winkansen beïnvloedt.
+`
+
+/** Extra instructie die alleen bij referenties-secties wordt meegegeven. */
+export const REFERENCES_SECTION_INSTRUCTION = `
+Dit is een REFERENTIES-sectie. Strikte regels:
+
+1. Gebruik UITSLUITEND referenties die in het veld "Referenties/ervaring" van de bedrijfscontext staan. Voeg geen details toe die er niet in staan (geen verzonnen contractwaarden, locaties, resultaten of namen).
+
+2. Als de bedrijfscontext voldoende referenties bevat:
+   - Beschrijf elke referentie in een aparte subsectie (###) met: opdrachtgever, projectomschrijving, relevantie voor deze aanbesteding.
+   - Leg per referentie expliciet de link naar de eisen of gunningscriteria van deze tender.
+
+3. Als de bedrijfscontext geen of onvoldoende referenties bevat:
+   - Schrijf de structuur van de sectie wél uit (opbouw, hoe referenties worden gepresenteerd), maar markeer de ontbrekende projecten duidelijk als placeholder:
+     [REFERENTIE INVULLEN — projectnaam, opdrachtgever, jaar, scope, uitkomst]
+   - Voeg een redactionele noot toe: "Onderstaande referenties dienen nog te worden aangevuld met werkelijke projectgegevens voor indiening."
+
+4. Verzin NOOIT een projectnaam, opdrachtgever, jaargetal, contractwaarde of resultaat. Niet als voorbeeld, niet als illustratie.
 `
 
 /** Evaluatie Agent: officiële terugkoppeling → concrete leerpunten voor de lessons_learned-tabel. */

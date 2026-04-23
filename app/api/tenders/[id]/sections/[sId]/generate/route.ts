@@ -3,7 +3,7 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { tenderSections, tenders, tenderDocuments } from '@/lib/db/schema'
 import { eq } from 'drizzle-orm'
-import { SECTION_WRITING_SYSTEM, SECTION_WRITING_USER, PRICE_SECTION_INSTRUCTION } from '@/lib/ai/prompts'
+import { SECTION_WRITING_SYSTEM, SECTION_WRITING_USER, PRICE_SECTION_INSTRUCTION, REFERENCES_SECTION_INSTRUCTION } from '@/lib/ai/prompts'
 import { runCompletionStream, isAgentAvailable } from '@/lib/ai/run'
 import { getCompanyContext } from '@/lib/company/context'
 import { buildLessonsLearnedContextForWriting } from '@/lib/tenders/lessons-learned-eval'
@@ -68,16 +68,19 @@ export async function POST(
   const companyContext = await getCompanyContext()
   const lessonsLearnedContext = await buildLessonsLearnedContextForWriting(35)
 
-  const isPriceSection = (section?.sectionType || '') === 'prijs_onderbouwing'
-  const sectionTypeInstruction = isPriceSection
-    ? PRICE_SECTION_INSTRUCTION({
-        estimatedValue: tender?.estimatedValue ?? null,
-        kostenRaming: tender?.kostenRaming ?? null,
-        margePercentage: tender?.margePercentage ?? null,
-        prijsInschrijving: tender?.prijsInschrijving ?? null,
-        procedureType: tender?.procedureType ?? null,
-      })
-    : undefined
+  const sectionType = section?.sectionType || 'eigen_sectie'
+  let sectionTypeInstruction: string | undefined
+  if (sectionType === 'prijs_onderbouwing') {
+    sectionTypeInstruction = PRICE_SECTION_INSTRUCTION({
+      estimatedValue: tender?.estimatedValue ?? null,
+      kostenRaming: tender?.kostenRaming ?? null,
+      margePercentage: tender?.margePercentage ?? null,
+      prijsInschrijving: tender?.prijsInschrijving ?? null,
+      procedureType: tender?.procedureType ?? null,
+    })
+  } else if (sectionType === 'referenties') {
+    sectionTypeInstruction = REFERENCES_SECTION_INSTRUCTION
+  }
 
   const userContent = SECTION_WRITING_USER(
     sectionTypeLabel,
