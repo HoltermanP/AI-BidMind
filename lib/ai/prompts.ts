@@ -221,6 +221,7 @@ export const SECTION_WRITING_USER = (
   companyContext?: string,
   lessonsLearnedContext?: string,
   sectionTypeInstruction?: string,
+  webReferencesContext?: string,
 ) => `
 ${companyContext ? `${companyContext}\n\n` : ''}Schrijf een inhoudelijk sterk en volledig document voor de sectie "${sectionType}" van de aanbieding voor onderstaande aanbesteding. Baseer de inhoud uitsluitend op de beschikbare aanbestedingsdocumenten en bedrijfscontext — verzin geen feiten die er niet in staan.
 
@@ -236,7 +237,7 @@ ${requirements.length ? requirements.map((r, i) => `${i + 1}. ${r}`).join('\n') 
 
 --- Uitgebreide context uit de aanbestedingsdocumenten ---
 ${documentContext}
-${lessonsLearnedContext ? `\n--- Leerpunten uit eerdere aanbestedingen (vermijd herhaling van bekende fouten; pas toe waar inhoudelijk relevant) ---\n${lessonsLearnedContext}\n` : ''}${sectionTypeInstruction ? `\n--- Specifieke instructies voor dit sectietype ---\n${sectionTypeInstruction}\n` : ''}
+${webReferencesContext ? `\n${webReferencesContext}\nBELANGRIJK: bovenstaande referenties komen uitsluitend uit openbare bronnen op internet. Gebruik deze feiten letterlijk. Voeg geen details toe die er niet in staan.\n` : ''}${lessonsLearnedContext ? `\n--- Leerpunten uit eerdere aanbestedingen (vermijd herhaling van bekende fouten; pas toe waar inhoudelijk relevant) ---\n${lessonsLearnedContext}\n` : ''}${sectionTypeInstruction ? `\n--- Specifieke instructies voor dit sectietype ---\n${sectionTypeInstruction}\n` : ''}
 --- Instructie ---
 Schrijf een volledig, goed gestructureerd document in Markdown:
 - Gebruik ## voor hoofdkopjes en ### voor subkopjes.

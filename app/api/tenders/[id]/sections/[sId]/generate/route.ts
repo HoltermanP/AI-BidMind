@@ -7,6 +7,8 @@ import { SECTION_WRITING_SYSTEM, SECTION_WRITING_USER, PRICE_SECTION_INSTRUCTION
 import { runCompletionStream, isAgentAvailable } from '@/lib/ai/run'
 import { getCompanyContext } from '@/lib/company/context'
 import { buildLessonsLearnedContextForWriting } from '@/lib/tenders/lessons-learned-eval'
+import { lookupCompanyReferences } from '@/lib/ai/company-references-lookup'
+import { companySettings } from '@/lib/db/schema'
 
 const SECTION_TYPE_LABELS: Record<string, string> = {
   plan_van_aanpak: 'Plan van Aanpak',
@@ -70,6 +72,8 @@ export async function POST(
 
   const sectionType = section?.sectionType || 'eigen_sectie'
   let sectionTypeInstruction: string | undefined
+  let webReferencesContext: string | undefined
+
   if (sectionType === 'prijs_onderbouwing') {
     sectionTypeInstruction = PRICE_SECTION_INSTRUCTION({
       estimatedValue: tender?.estimatedValue ?? null,
@@ -80,6 +84,18 @@ export async function POST(
     })
   } else if (sectionType === 'referenties') {
     sectionTypeInstruction = REFERENCES_SECTION_INSTRUCTION
+
+    // Haal bedrijfsnaam op voor de web-lookup
+    if (db) {
+      const [settings] = await db.select().from(companySettings).where(
+        (await import('drizzle-orm')).eq(companySettings.id, 'default')
+      )
+      const companyName = settings?.companyName
+      if (companyName) {
+        const found = await lookupCompanyReferences(companyName)
+        if (found) webReferencesContext = found
+      }
+    }
   }
 
   const userContent = SECTION_WRITING_USER(
@@ -91,6 +107,7 @@ export async function POST(
     companyContext || undefined,
     lessonsLearnedContext || undefined,
     sectionTypeInstruction,
+    webReferencesContext,
   )
 
   const encoder = new TextEncoder()
