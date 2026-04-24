@@ -256,7 +256,7 @@ export const VALID_FORWARD_TRANSITIONS: Partial<Record<string, string[]>> = {
   qualifying:   ['analyzing'],
   analyzing:    ['inlichtingen', 'writing'],
   inlichtingen: ['writing'],
-  writing:      ['review'],
+  writing:      ['review', 'submitted'],
   review:       ['submitted'],
   submitted:    ['won', 'lost'],
 }

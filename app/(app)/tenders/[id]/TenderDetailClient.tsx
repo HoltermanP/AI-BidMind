@@ -139,9 +139,14 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
   }
 
   const handleTabClick = (tabId: TenderDetailTabId) => {
-    const state = getTabState(tabId, tender.status)
+    const state = getTabState(tabId, tender.status, phaseEvidence)
     if (state === 'locked') {
-      toast('Vorige fase nog niet afgerond', 'error')
+      // Geef een concrete uitleg per situatie
+      if (tabId === 'timeline' && (tender.status === 'writing' || tender.status === 'review')) {
+        toast('Genereer eerst de Review (Review Agent) of markeer de aanbieding als klaar voor indiening via de knop hieronder.', 'error')
+      } else {
+        toast('Vorige fase nog niet afgerond', 'error')
+      }
       return
     }
     if (state === 'done' || state === 'active') {
@@ -533,13 +538,49 @@ export default function TenderDetailClient({ tender: initialTender, documents: i
                 />
               )}
               {activeTab === 'sections' && (
-                <SectionsTab
-                  tender={tender}
-                  sections={sections}
-                  onSectionsChange={setSections}
-                  documents={documents}
-                  onTenderUpdate={(updates) => setTender((prev: any) => ({ ...prev, ...updates }))}
-                />
+                <>
+                  <SectionsTab
+                    tender={tender}
+                    sections={sections}
+                    onSectionsChange={setSections}
+                    documents={documents}
+                    onTenderUpdate={(updates) => setTender((prev: any) => ({ ...prev, ...updates }))}
+                  />
+                  {(tender.status === 'writing' || tender.status === 'review') && (
+                    <div
+                      style={{
+                        marginTop: 28,
+                        padding: 20,
+                        borderRadius: 8,
+                        border: '1px solid #D1FAE5',
+                        background: '#F0FDF4',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: 12,
+                      }}
+                    >
+                      <div>
+                        <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'var(--font-heading)', color: '#065F46' }}>
+                          Aanbieding indienen
+                        </span>
+                        <p style={{ fontSize: 12, color: '#065F46', margin: '4px 0 0', opacity: 0.85 }}>
+                          {tender.status === 'writing'
+                            ? 'De aanbieding staat in concept. Markeer als ingediend zodra de offerte verstuurd is.'
+                            : 'De review is afgerond. Markeer als ingediend zodra de offerte verstuurd is.'}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => patchTender({ status: 'submitted' })}
+                      >
+                        Markeer als ingediend →
+                      </Button>
+                    </div>
+                  )}
+                </>
               )}
               {activeTab === 'lessons' && (
                 <LessonsLearnedTab
