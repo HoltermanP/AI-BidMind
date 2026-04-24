@@ -70,6 +70,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       'evaluatieDebriefingDraft',
       'evaluatieScoreVergelijkingJson',
       'evaluatieBezwaarCheckJson',
+      'handoverReportStatus',
     ] as const
 
     const dateFields = new Set([

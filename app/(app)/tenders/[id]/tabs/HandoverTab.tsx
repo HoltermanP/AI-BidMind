@@ -102,6 +102,20 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
     }
   }, [gammaPending, tender.id, toast])
 
+  const handleResetStatus = async () => {
+    try {
+      const res = await fetch(`/api/tenders/${tender.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ handoverReportStatus: null }),
+      })
+      if (res.ok) onTenderUpdate(await res.json())
+      else toast('Status herstellen mislukt', 'error')
+    } catch {
+      toast('Status herstellen mislukt', 'error')
+    }
+  }
+
   const handleGenerate = async () => {
     setGenerating(true)
     try {
@@ -225,6 +239,11 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
         <Button size="sm" variant="secondary" onClick={handleGenerate} disabled={busy}>
           {busy ? 'Bezig…' : hasOutput ? 'Opnieuw genereren' : 'Plan & presentatie genereren'}
         </Button>
+        {status === 'processing' && !generating && (
+          <Button size="sm" variant="secondary" onClick={handleResetStatus}>
+            Status herstellen
+          </Button>
+        )}
         {hasOutput && (
           <>
             <Button
@@ -321,7 +340,9 @@ export default function HandoverTab({ tender, onTenderUpdate }: Props) {
 
       {busy && (
         <p style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 16 }}>
-          De Overdracht Agent werkt aan je plan en presentatie. Dit kan een minuut duren…
+          {generating
+            ? 'De Overdracht Agent werkt aan je plan en presentatie. Dit kan een minuut duren…'
+            : 'De vorige generatie is mogelijk vastgelopen. Klik op “Status herstellen” om opnieuw te beginnen.'}
         </p>
       )}
 
