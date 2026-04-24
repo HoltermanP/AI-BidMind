@@ -130,21 +130,27 @@ Lever alleen het HTML-fragment, zonder markdown code fences en zonder tekst vó�
 `
 
 /** Overdracht Agent (na gunning): implementatieplan + presentatie-samenvatting als JSON met twee HTML-fragmenten. */
-export const HANDOVER_REPORT_SYSTEM = `Je bent de Overdracht Agent voor Nederlandse aanbestedingen. De tender is gewonnen; je bereidt de overdracht van tender naar uitvoering/project voor.
+export const HANDOVER_PLAN_SYSTEM = `Je bent de Overdracht Agent voor Nederlandse aanbestedingen. De tender is gewonnen; je stelt het implementatieplan op voor de overdracht van tender naar uitvoering/project.
 
 ${AI_PROJECT_NAMING_RULE}
 
-Je levert twee dingen in één JSON-antwoord:
-1) Een uitvoerbaar implementatieplan (HTML): fasering, mijlpalen, afhankelijkheden, risico’s en mitigatie, overdrachtsmomenten (contract/PO/startwerk), KPI’s en reviewmomenten, suggestie RACI (rollen op hoofdlijnen), aandachtspunten voor inkoop/juridisch/uitvoering gebaseerd op de beschikbare bedrijfsinformatie en contractcontext.
-2) Een presentatie (HTML): de kern van het plan in slide-vorm — elke slide is een <section class="handover-slide"> met een duidelijke titel (h2 of h3) en bullets of korte alinea’s; deze secties worden 1-op-1 geëxporteerd naar een opgemaakte PowerPoint (.pptx). Denk aan 8–14 slides: o.a. context, doelen, tijdlijn, team/overdracht, top-risico’s, volgende stappen. Dit is een samenvatting om intern te pitchen, geen herhaling van het volledige plan.
-
 Schrijf in helder Nederlands, zakelijk. Gebruik alleen toegestane HTML-tags (semantisch). Geen script, style, iframe.
 
-Output: uitsluitend één geldig JSON-object (geen markdown-fences) met exact deze sleutels:
-- "plan_html": string — HTML-fragment dat begint met <article class="tender-handover-plan"> en eindigt met </article>
-- "presentation_html": string — HTML-fragment dat begint met <article class="tender-handover-presentation"> en eindigt met </article>; binnenin meerdere <section class="handover-slide">...</section>`
+Output: uitsluitend een HTML-fragment dat begint met <article class="tender-handover-plan"> en eindigt met </article>. Geen JSON, geen markdown-fences, geen tekst buiten de HTML.
 
-export const HANDOVER_REPORT_USER = (payload: {
+Verplichte h2-secties (minimaal):
+1. Executive summary
+2. Scope en uitgangspunten
+3. Tijdlijn en mijlpalen
+4. Organisatie en RACI (hoofdlijnen)
+5. Contractuele en leveranciersaandachtspunten
+6. Risico's en mitigatie
+7. Overdracht checklist naar uitvoering (expliciete punten voor projectteam)
+8. Kick-off en interne overdracht (voorziene datum, benoemde projectleider, eerste betalingstermijn — gebruik placeholders als data ontbreken en label ze duidelijk)
+9. Koppeling tenderdossier naar project
+10. Volgende 30/60/90 dagen`
+
+export const HANDOVER_PLAN_USER = (payload: {
   tenderJson: string
   sectionsPayload: string
   criteriaAndDocumentsPayload: string
@@ -158,17 +164,36 @@ ${payload.tenderJson}
 ${payload.analysisReportExcerpt ? `--- Fragment tenderanalyse (context) ---\n${payload.analysisReportExcerpt}\n\n` : ''}${payload.reviewReportExcerpt ? `--- Fragment reviewrapport (indien aanwezig) ---\n${payload.reviewReportExcerpt}\n\n` : ''}--- Gunningscriteria / documentcontext (samenvatting uit geanalyseerde documenten) ---
 ${payload.criteriaAndDocumentsPayload}
 
---- Winnende aanbieding (alle secties met inhoud; één sectie kan de volledige aanbieding zijn, of gebruik alle onderstaande blokken als er meerdere secties zijn) ---
+--- Winnende aanbieding (alle secties met inhoud) ---
 ${payload.sectionsPayload}
 
 --- Instructie ---
-Vul het JSON-antwoord in. Gebruik de volledige informatie uit alle meegeleverde sectieblokken. Als er maar één sectie is, baseer je het plan en de presentatie daar volledig op (aangevuld met documentanalyse en bedrijfscontext). Bij meerdere secties: synthetiseer consequent over alle secties heen. Vul aan met redelijke projectpraktijk waar gegevens ontbreken en noem aannames expliciet in het plan.
+Schrijf het implementatieplan als HTML. Begin direct met <article class="tender-handover-plan">. Geen JSON, geen tekst buiten de HTML. Gebruik de volledige informatie uit alle meegeleverde sectieblokken. Vul aan met redelijke projectpraktijk waar gegevens ontbreken en noem aannames expliciet.
+`
 
-Voor "plan_html": verplichte inhoudelijke secties (h2) minimaal: (1) Executive summary, (2) Scope en uitgangspunten, (3) Tijdlijn en mijlpalen, (4) Organisatie en RACI (hoofdlijnen), (5) Contractuele en leveranciersaandachtspunten, (6) Risico’s en mitigatie, (7) Overdracht checklist naar uitvoering (expliciete punten voor projectteam), (8) Kick-off en interne overdracht — noem concrete velden: voorziene kick-off datum, benoemde projectleider, mijlpalen, eerste betalingstermijn (gebruik placeholders alleen als data ontbreken en label ze duidelijk), (9) Koppeling tenderdossier: welke documenten/secties gaan rechtstreeks mee naar het project, (10) Volgende 30/60/90 dagen.
+export const HANDOVER_PRESENTATION_SYSTEM = `Je bent de Overdracht Agent voor Nederlandse aanbestedingen. Je maakt een presentatie (slide-deck) die de kern van het implementatieplan samenvat voor stakeholders.
 
-Voor "presentation_html": compacte slides; geen volledige kopie van het plan; wel de verhaallijn voor stakeholders.
+${AI_PROJECT_NAMING_RULE}
 
-Retourneer alleen het JSON-object; escaleer aanhalingstekens in HTML correct.
+Elke slide is een <section class="handover-slide"> met een duidelijke titel (h2 of h3) en bullets of korte alinea's. De slides worden 1-op-1 geëxporteerd naar PowerPoint.
+
+Doelomvang: 8–14 slides. Onderwerpen: context, doelen, tijdlijn, team/overdracht, top-risico's, volgende stappen. Samenvatting — geen herhaling van het volledige plan.
+
+Output: uitsluitend een HTML-fragment dat begint met <article class="tender-handover-presentation"> en eindigt met </article>. Binnenin meerdere <section class="handover-slide">...</section>. Geen JSON, geen markdown-fences, geen tekst buiten de HTML.`
+
+export const HANDOVER_PRESENTATION_USER = (payload: {
+  tenderJson: string
+  planSummary: string
+  companyContext?: string
+}) => `
+${payload.companyContext ? `${payload.companyContext}\n\n` : ''}--- Tender (metadata) ---
+${payload.tenderJson}
+
+--- Implementatieplan (samenvatting als context) ---
+${payload.planSummary}
+
+--- Instructie ---
+Schrijf de presentatie als HTML. Begin direct met <article class="tender-handover-presentation">. Geen JSON, geen tekst buiten de HTML. 8–14 slides, elke slide een <section class="handover-slide">. Compacte slides voor stakeholders — verhaallijn, geen volledige kopie van het plan.
 `
 
 export const QUESTION_GENERATION_SYSTEM = `Je bent een senior tendermanager voor Nederlandse aanbestedingen. Op basis van de aanbestedingsdocumenten genereer je een uitgebreide lijst van vragen voor de Nota van Inlichtingen (NVI) fase. Vragen moeten specifiek, strategisch en gericht zijn op het verduidelijken van ambiguïteiten die de inschrijving kunnen beïnvloeden.
@@ -359,7 +384,7 @@ Referentie/kenmerk: ${payload.referenceNumber ?? '—'}
 ${payload.feedbackDocumentText}
 `
 
-/** Risico Agent — contractvorm en contractuele risico’s (JSON + HTML + gestructureerde items). */
+/** Risico Agent — contractvorm en contractuele risico's (JSON + HTML + gestructureerde items). */
 export const TENDER_RISK_REPORT_SYSTEM = `Je bent de Risico Agent voor Nederlandse aanbestedingen. Je schrijft een professioneel, zeer uitgebreid contract- en risicorapport als één doorlopend HTML-document (geen Markdown).
 
 ${AI_PROJECT_NAMING_RULE}

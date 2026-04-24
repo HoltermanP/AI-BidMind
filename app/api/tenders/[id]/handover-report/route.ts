@@ -3,11 +3,10 @@ import { auth } from '@clerk/nextjs/server'
 import { db } from '@/lib/db'
 import { tenders, tenderDocuments, tenderSections, tenderActivities } from '@/lib/db/schema'
 import { eq, asc } from 'drizzle-orm'
-import { HANDOVER_REPORT_SYSTEM, HANDOVER_REPORT_USER } from '@/lib/ai/prompts'
+import { HANDOVER_PLAN_SYSTEM, HANDOVER_PLAN_USER, HANDOVER_PRESENTATION_SYSTEM, HANDOVER_PRESENTATION_USER } from '@/lib/ai/prompts'
 import { runAnthropicCompletionDetailed, isAgentAvailable } from '@/lib/ai/run'
 import { getCompanyContext } from '@/lib/company/context'
 import { sanitizeAndWrapHandoverPlanHtml, sanitizeAndWrapHandoverPresentationHtml } from '@/lib/analysis/sanitize-report-html'
-import { parseHandoverReportResponse } from '@/lib/analysis/parse-handover-report'
 import { tenderMetadataJson } from '@/lib/tenders/tender-metadata-json'
 
 export const maxDuration = 120
@@ -142,22 +141,24 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       : undefined
 
     const companyContext = await getCompanyContext()
-    const { text: raw, stopReason } = await runAnthropicCompletionDetailed(
+    const tenderJson = tenderMetadataJson(tender)
+
+    // Call 1: implementatieplan (plain HTML — geen JSON-wrapper)
+    const { text: rawPlan, stopReason: planStopReason } = await runAnthropicCompletionDetailed(
       'handover_report',
-      HANDOVER_REPORT_SYSTEM,
-      HANDOVER_REPORT_USER({
-        tenderJson: tenderMetadataJson(tender),
+      HANDOVER_PLAN_SYSTEM,
+      HANDOVER_PLAN_USER({
+        tenderJson,
         sectionsPayload,
         criteriaAndDocumentsPayload,
         analysisReportExcerpt,
         reviewReportExcerpt,
         companyContext: companyContext || undefined,
       }),
-      { maxTokens: 16384, jsonMode: true }
+      { maxTokens: 8192 }
     )
 
-    if (stopReason === 'max_tokens') {
-      console.error('Handover report: Anthropic stop_reason=max_tokens (output truncated)')
+    if (planStopReason === 'max_tokens' || planStopReason === 'refusal') {
       await db
         .update(tenders)
         .set({ handoverReportStatus: 'failed', updatedAt: new Date() })
@@ -165,45 +166,82 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       return NextResponse.json(
         {
           error:
-            'De output werd afgekapt door de tokenlimiet. Probeer het opnieuw; bij herhaald falen: kortere sectieteksten.',
+            planStopReason === 'refusal'
+              ? 'Het model weigerde het implementatieplan te genereren. Probeer later opnieuw.'
+              : 'Het implementatieplan werd afgekapt door de tokenlimiet. Probeer het opnieuw.',
         },
         { status: 500 }
       )
     }
 
-    if (stopReason === 'refusal') {
-      await db
-        .update(tenders)
-        .set({ handoverReportStatus: 'failed', updatedAt: new Date() })
-        .where(eq(tenders.id, id))
-      return NextResponse.json(
-        { error: 'Het model weigerde het overdrachtsrapport te genereren. Probeer later opnieuw of pas de brondata aan.' },
-        { status: 500 }
-      )
-    }
+    const planHtml = sanitizeAndWrapHandoverPlanHtml(rawPlan || '')
 
-    const parsed = parseHandoverReportResponse(raw || '')
-    const planHtml = sanitizeAndWrapHandoverPlanHtml(parsed.planHtml)
-    const presentationHtml = sanitizeAndWrapHandoverPresentationHtml(parsed.presentationHtml)
-    const now = new Date()
-
-    if (visibleTextLength(planHtml) < 300 || visibleTextLength(presentationHtml) < 120) {
-      console.error('Handover report: empty or too short after sanitize', {
-        stopReason,
-        rawLength: raw?.length ?? 0,
-        planLen: planHtml.length,
-        presLen: presentationHtml.length,
-        rawPreview: (raw || '').slice(0, 400),
+    if (visibleTextLength(planHtml) < 300) {
+      console.error('Handover plan: too short after sanitize', {
+        planStopReason,
+        rawLength: rawPlan?.length ?? 0,
+        rawPreview: (rawPlan || '').slice(0, 400),
       })
       await db
         .update(tenders)
         .set({ handoverReportStatus: 'failed', updatedAt: new Date() })
         .where(eq(tenders.id, id))
       return NextResponse.json(
+        { error: 'Het model leverde geen bruikbaar implementatieplan. Probeer opnieuw te genereren.' },
+        { status: 500 }
+      )
+    }
+
+    // Sla het plan alvast op zodat het niet verloren gaat als de presentatie mislukt
+    await db
+      .update(tenders)
+      .set({ handoverPlanHtml: planHtml, updatedAt: new Date() })
+      .where(eq(tenders.id, id))
+
+    // Call 2: presentatie-slides (plain HTML — geen JSON-wrapper)
+    const planSummary = stripHtmlToPlain(planHtml, 6000)
+    const { text: rawPresentation, stopReason: presStopReason } = await runAnthropicCompletionDetailed(
+      'handover_report',
+      HANDOVER_PRESENTATION_SYSTEM,
+      HANDOVER_PRESENTATION_USER({
+        tenderJson,
+        planSummary,
+        companyContext: companyContext || undefined,
+      }),
+      { maxTokens: 4096 }
+    )
+
+    if (presStopReason === 'max_tokens' || presStopReason === 'refusal') {
+      await db
+        .update(tenders)
+        .set({ handoverReportStatus: 'failed', updatedAt: new Date() })
+        .where(eq(tenders.id, id))
+      return NextResponse.json(
         {
           error:
-            'Het model leverde geen bruikbaar plan en/of presentatie op. Controleer of Anthropic bereikbaar is en probeer opnieuw te genereren.',
+            presStopReason === 'refusal'
+              ? 'Het model weigerde de presentatie te genereren. Probeer later opnieuw.'
+              : 'De presentatie werd afgekapt door de tokenlimiet. Probeer het opnieuw.',
         },
+        { status: 500 }
+      )
+    }
+
+    const presentationHtml = sanitizeAndWrapHandoverPresentationHtml(rawPresentation || '')
+    const now = new Date()
+
+    if (visibleTextLength(presentationHtml) < 120) {
+      console.error('Handover presentation: too short after sanitize', {
+        presStopReason,
+        rawLength: rawPresentation?.length ?? 0,
+        rawPreview: (rawPresentation || '').slice(0, 400),
+      })
+      await db
+        .update(tenders)
+        .set({ handoverReportStatus: 'failed', updatedAt: new Date() })
+        .where(eq(tenders.id, id))
+      return NextResponse.json(
+        { error: 'Het model leverde geen bruikbare presentatie. Probeer opnieuw te genereren.' },
         { status: 500 }
       )
     }
@@ -225,7 +263,7 @@ export async function POST(_request: NextRequest, { params }: { params: Promise<
       userId,
       activityType: 'tender_handover_report',
       description: 'Overdracht: implementatieplan en presentatie gegenereerd',
-      metadata: { stopReason: stopReason ?? undefined },
+      metadata: { planStopReason: planStopReason ?? undefined, presStopReason: presStopReason ?? undefined },
     })
 
     return NextResponse.json(updated)
