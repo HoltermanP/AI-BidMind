@@ -306,6 +306,7 @@ export const companySettings = pgTable('company_settings', {
   annualPlanText: text('annual_plan_text'),
   strengthsText: text('strengths_text'),
   referencesText: text('references_text'),
+  preferredCpvCodes: text('preferred_cpv_codes').array(),
   updatedAt: timestamp('updated_at').defaultNow(),
 })
 

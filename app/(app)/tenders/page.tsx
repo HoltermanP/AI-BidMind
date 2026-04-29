@@ -1,21 +1,18 @@
 import { db } from '@/lib/db'
-import { tenders, users } from '@/lib/db/schema'
-import { desc, ilike, or, eq, and, SQL } from 'drizzle-orm'
-import Link from 'next/link'
-import Badge from '@/components/ui/Badge'
-import Avatar from '@/components/ui/Avatar'
-import { formatDate, formatCurrency, getDaysUntil } from '@/lib/utils/format'
+import { tenders, users, companySettings } from '@/lib/db/schema'
+import { desc, eq } from 'drizzle-orm'
 import TendersClient from './TendersClient'
 
 export const dynamic = 'force-dynamic'
 
 async function getTenders(searchParams: Record<string, string>) {
   if (!db) {
-    return { tenders: [], userMap: {}, allUsers: [] }
+    return { tenders: [], userMap: {}, allUsers: [], preferredCpvCodes: [] }
   }
   const allTenders = await db.select().from(tenders).orderBy(desc(tenders.updatedAt))
   const allUsers = await db.select().from(users)
   const userMap = Object.fromEntries(allUsers.map((u) => [u.id, u]))
+  const [settings] = await db.select({ preferredCpvCodes: companySettings.preferredCpvCodes }).from(companySettings).where(eq(companySettings.id, 'default'))
 
   let filtered = allTenders
 
@@ -65,12 +62,12 @@ async function getTenders(searchParams: Record<string, string>) {
     }
   }
 
-  return { tenders: filtered, userMap, allUsers }
+  return { tenders: filtered, userMap, allUsers, preferredCpvCodes: settings?.preferredCpvCodes ?? [] }
 }
 
 export default async function TendersPage({ searchParams }: { searchParams: Promise<Record<string, string>> }) {
   const params = await searchParams
-  const { tenders: tenderList, userMap, allUsers } = await getTenders(params)
+  const { tenders: tenderList, userMap, allUsers, preferredCpvCodes } = await getTenders(params)
 
   return (
     <TendersClient
@@ -78,6 +75,7 @@ export default async function TendersPage({ searchParams }: { searchParams: Prom
       userMap={userMap}
       allUsers={allUsers}
       initialSearchParams={params}
+      preferredCpvCodes={preferredCpvCodes ?? []}
     />
   )
 }

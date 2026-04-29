@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useToast } from '@/components/ui/Toast'
 import Button from '@/components/ui/Button'
+import { CPV_DIVISIONS } from '@/lib/cpv/cpv-divisions'
 
 const inputStyle = {
   width: '100%',
@@ -42,6 +43,7 @@ type CompanySettings = {
   annualPlanText: string | null
   strengthsText: string | null
   referencesText: string | null
+  preferredCpvCodes: string[] | null
   updatedAt: string | null
 }
 
@@ -55,6 +57,112 @@ type CompanyDocument = {
 
 type User = { id: string; name: string | null; email: string | null }
 
+function CpvSelector({
+  selected,
+  search,
+  onSearchChange,
+  onToggle,
+}: {
+  selected: string[]
+  search: string
+  onSearchChange: (v: string) => void
+  onToggle: (code: string) => void
+}) {
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return CPV_DIVISIONS
+    return CPV_DIVISIONS.filter(
+      (d) => d.code.includes(q) || d.label.toLowerCase().includes(q)
+    )
+  }, [search])
+
+  return (
+    <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 4, padding: 24 }}>
+      <h3 style={{ fontSize: 14, fontFamily: 'var(--font-heading)', fontWeight: 700, color: 'var(--navy)', marginBottom: 6 }}>
+        Hoofd CPV-codes (werkveld)
+      </h3>
+      <p style={{ fontSize: 12, color: 'var(--text-secondary)', marginBottom: 14, lineHeight: 1.5 }}>
+        Selecteer de CPV-divisies die bij jullie werkveld passen. Op de tenders-overzichtspagina wordt standaard op deze codes gefilterd, zodat alleen relevante aanbestedingen zichtbaar zijn.
+      </p>
+      {selected.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+          {selected.map((code) => {
+            const div = CPV_DIVISIONS.find((d) => d.code === code)
+            return (
+              <span
+                key={code}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 4,
+                  background: 'var(--navy)', color: 'white',
+                  borderRadius: 4, padding: '3px 8px', fontSize: 12, fontWeight: 600,
+                }}
+              >
+                {code} — {div?.label ?? code}
+                <button
+                  type="button"
+                  onClick={() => onToggle(code)}
+                  style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer', padding: 0, lineHeight: 1, fontSize: 14, opacity: 0.75 }}
+                  aria-label={`Verwijder ${code}`}
+                >
+                  ×
+                </button>
+              </span>
+            )
+          })}
+        </div>
+      )}
+      <input
+        value={search}
+        onChange={(e) => onSearchChange(e.target.value)}
+        placeholder="Zoek op code of omschrijving..."
+        style={{
+          width: '100%', padding: '7px 10px', marginBottom: 10,
+          border: '1px solid var(--border)', borderRadius: 4,
+          fontSize: 13, fontFamily: 'IBM Plex Sans, sans-serif',
+          color: 'var(--text-primary)', outline: 'none',
+        }}
+      />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 6 }}>
+        {filtered.map((div) => {
+          const active = selected.includes(div.code)
+          return (
+            <button
+              key={div.code}
+              type="button"
+              onClick={() => onToggle(div.code)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8,
+                padding: '7px 10px', borderRadius: 4, cursor: 'pointer', textAlign: 'left',
+                border: active ? '1.5px solid var(--navy)' : '1px solid var(--border)',
+                background: active ? '#EFF6FF' : 'var(--off-white)',
+                fontFamily: 'IBM Plex Sans, sans-serif',
+                transition: 'background 0.1s, border-color 0.1s',
+              }}
+            >
+              <span style={{
+                minWidth: 26, fontSize: 11, fontWeight: 700,
+                fontFamily: 'IBM Plex Mono, monospace',
+                color: active ? 'var(--navy)' : 'var(--text-secondary)',
+              }}>
+                {div.code}
+              </span>
+              <span style={{ fontSize: 12, color: active ? 'var(--navy)' : 'var(--text-primary)', fontWeight: active ? 600 : 400 }}>
+                {div.label}
+              </span>
+              {active && (
+                <span style={{ marginLeft: 'auto', color: 'var(--navy)', fontSize: 14, lineHeight: 1 }}>✓</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+      {filtered.length === 0 && (
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>Geen resultaten voor &quot;{search}&quot;</p>
+      )}
+    </div>
+  )
+}
+
 export default function BedrijfsinformatiePage() {
   const { toast } = useToast()
   const [settings, setSettings] = useState<CompanySettings | null>(null)
@@ -63,6 +171,7 @@ export default function BedrijfsinformatiePage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState<string | null>(null)
+  const [cpvSearch, setCpvSearch] = useState('')
 
   const [form, setForm] = useState({
     companyName: '',
@@ -75,6 +184,7 @@ export default function BedrijfsinformatiePage() {
     annualPlanText: '',
     strengthsText: '',
     referencesText: '',
+    preferredCpvCodes: [] as string[],
   })
 
   useEffect(() => {
@@ -102,6 +212,7 @@ export default function BedrijfsinformatiePage() {
             annualPlanText: data.settings.annualPlanText ?? '',
             strengthsText: data.settings.strengthsText ?? '',
             referencesText: data.settings.referencesText ?? '',
+            preferredCpvCodes: data.settings.preferredCpvCodes ?? [],
           })
         }
       } catch {
@@ -353,6 +464,21 @@ export default function BedrijfsinformatiePage() {
             </div>
           </div>
         </div>
+
+        {/* Hoofd CPV-codes */}
+        <CpvSelector
+          selected={form.preferredCpvCodes}
+          search={cpvSearch}
+          onSearchChange={setCpvSearch}
+          onToggle={(code) =>
+            setForm((f) => ({
+              ...f,
+              preferredCpvCodes: f.preferredCpvCodes.includes(code)
+                ? f.preferredCpvCodes.filter((c) => c !== code)
+                : [...f.preferredCpvCodes, code],
+            }))
+          }
+        />
 
         <div style={{ background: '#E0F2FE', border: '1px solid #7DD3FC', borderRadius: 4, padding: 16 }}>
           <p style={{ fontSize: 12, color: '#0C4A6E', margin: 0, lineHeight: 1.5 }}>

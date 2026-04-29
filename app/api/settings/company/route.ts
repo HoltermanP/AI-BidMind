@@ -34,6 +34,7 @@ export async function GET() {
         annualPlanText: null,
         strengthsText: null,
         referencesText: null,
+        preferredCpvCodes: null,
         updatedAt: null,
       },
       documents: documents ?? [],
@@ -62,6 +63,7 @@ export async function PATCH(request: NextRequest) {
       annualPlanText,
       strengthsText,
       referencesText,
+      preferredCpvCodes,
     } = body
 
     const [existing] = await db.select().from(companySettings).where(eq(companySettings.id, SETTINGS_ID))
@@ -77,6 +79,7 @@ export async function PATCH(request: NextRequest) {
       annualPlanText: annualPlanText !== undefined ? annualPlanText : existing?.annualPlanText ?? null,
       strengthsText: strengthsText !== undefined ? strengthsText : existing?.strengthsText ?? null,
       referencesText: referencesText !== undefined ? referencesText : existing?.referencesText ?? null,
+      preferredCpvCodes: Array.isArray(preferredCpvCodes) ? preferredCpvCodes : (existing?.preferredCpvCodes ?? null),
       updatedAt: new Date(),
     }
 

@@ -11,6 +11,7 @@ import { formatDate, formatDateTime, formatCurrency, getDaysUntil, STATUS_LABELS
 import { PIPELINE_STAGES } from '@/lib/tender/pipeline'
 import { useToast } from '@/components/ui/Toast'
 import { displayTenderTitle } from '@/lib/tenders/resolve-project-title'
+import { cpvDivisionLabel } from '@/lib/cpv/cpv-divisions'
 
 export interface TenderNedItem {
   publicatieId: string
@@ -66,6 +67,7 @@ interface Tender {
   intakeSuitabilityScore: number | null
   intakeSuitabilityStatus: string | null
   intakeSuitabilitySummary?: string | null
+  cpvCodes?: string[] | null
 }
 
 interface User {
@@ -81,6 +83,7 @@ interface Props {
   userMap: Record<string, User>
   allUsers: User[]
   initialSearchParams: Record<string, string>
+  preferredCpvCodes: string[]
 }
 
 const STATUS_OPTIONS = [
@@ -88,11 +91,13 @@ const STATUS_OPTIONS = [
   ...PIPELINE_STAGES.map((s) => ({ value: s, label: STATUS_LABELS[s] ?? s })),
 ]
 
-export default function TendersClient({ initialTenders, userMap, allUsers, initialSearchParams }: Props) {
+export default function TendersClient({ initialTenders, userMap, allUsers, initialSearchParams, preferredCpvCodes }: Props) {
   const [search, setSearch] = useState(initialSearchParams.q || '')
   const [statusFilter, setStatusFilter] = useState(initialSearchParams.status || 'all')
   const [goNoGoFilter, setGoNoGoFilter] = useState(initialSearchParams.gonogo || 'all')
   const [geschiktheidFilter, setGeschiktheidFilter] = useState(initialSearchParams.geschiktheid || 'all')
+  // Standaard actief op preferred CPVs; lege array = geen CPV-filter (alles zichtbaar)
+  const [activeCpvCodes, setActiveCpvCodes] = useState<string[]>(preferredCpvCodes)
   const [sortBy, setSortBy] = useState<'deadline' | 'updated' | 'value'>('updated')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [showCreatePanel, setShowCreatePanel] = useState(false)
@@ -422,6 +427,14 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
       list = list.filter((t) => t.goNoGo === goNoGoFilter)
     }
 
+    if (activeCpvCodes.length > 0) {
+      list = list.filter((t) =>
+        (t.cpvCodes ?? []).some((code) =>
+          activeCpvCodes.some((div) => code.startsWith(div))
+        )
+      )
+    }
+
     const INTAKE_SCORE_HIGH_MIN = 70
     if (geschiktheidFilter !== 'all') {
       if (geschiktheidFilter === 'none') {
@@ -462,7 +475,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
     })
 
     return list
-  }, [initialTenders, search, statusFilter, goNoGoFilter, geschiktheidFilter, sortBy, sortDir])
+  }, [initialTenders, search, statusFilter, goNoGoFilter, geschiktheidFilter, activeCpvCodes, sortBy, sortDir])
 
   const toggleSort = (col: 'deadline' | 'updated' | 'value') => {
     if (sortBy === col) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
@@ -568,7 +581,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
             {filtered.length} tender{filtered.length !== 1 ? 's' : ''}
-            {statusFilter !== 'all' || goNoGoFilter !== 'all' || geschiktheidFilter !== 'all' || search ? ' (gefilterd)' : ''}
+            {statusFilter !== 'all' || goNoGoFilter !== 'all' || geschiktheidFilter !== 'all' || search || activeCpvCodes.length > 0 ? ' (gefilterd)' : ''}
           </p>
         </div>
         <div style={{ display: 'flex', gap: 10, width: isMobile ? '100%' : 'auto' }}>
@@ -951,6 +964,56 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
         </div>
       )}
 
+      {/* CPV filter chips (alleen zichtbaar als company preferredCpvCodes heeft) */}
+      {preferredCpvCodes.length > 0 && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 10,
+          alignItems: 'center',
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', whiteSpace: 'nowrap' }}>
+            CPV-filter:
+          </span>
+          <button
+            type="button"
+            onClick={() => setActiveCpvCodes([])}
+            style={{
+              padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              border: activeCpvCodes.length === 0 ? '1.5px solid var(--navy)' : '1px solid var(--border)',
+              background: activeCpvCodes.length === 0 ? 'var(--navy)' : 'white',
+              color: activeCpvCodes.length === 0 ? 'white' : 'var(--text-secondary)',
+              fontFamily: 'IBM Plex Sans, sans-serif',
+            }}
+          >
+            Alle tenders
+          </button>
+          {preferredCpvCodes.map((code) => {
+            const active = activeCpvCodes.includes(code)
+            return (
+              <button
+                key={code}
+                type="button"
+                onClick={() =>
+                  setActiveCpvCodes((prev) =>
+                    prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
+                  )
+                }
+                style={{
+                  padding: '4px 10px', borderRadius: 4, cursor: 'pointer', fontSize: 12, fontWeight: active ? 600 : 400,
+                  border: active ? '1.5px solid var(--slate-blue)' : '1px solid var(--border)',
+                  background: active ? '#EFF6FF' : 'white',
+                  color: active ? 'var(--navy)' : 'var(--text-secondary)',
+                  fontFamily: 'IBM Plex Sans, sans-serif',
+                  display: 'flex', alignItems: 'center', gap: 5,
+                }}
+              >
+                <span style={{ fontFamily: 'IBM Plex Mono, monospace', fontSize: 11 }}>{code}</span>
+                <span>{cpvDivisionLabel(code)}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
       {/* Filters */}
       <div style={{
         display: 'flex',
@@ -1078,7 +1141,7 @@ export default function TendersClient({ initialTenders, userMap, allUsers, initi
         )}
         {(search || statusFilter !== 'all' || goNoGoFilter !== 'all' || geschiktheidFilter !== 'all') && (
           <button
-            onClick={() => { setSearch(''); setStatusFilter('all'); setGoNoGoFilter('all'); setGeschiktheidFilter('all') }}
+            onClick={() => { setSearch(''); setStatusFilter('all'); setGoNoGoFilter('all'); setGeschiktheidFilter('all'); setActiveCpvCodes([]) }}
             style={{
               background: 'none', border: 'none', color: 'var(--muted)', cursor: 'pointer',
               fontSize: 12, fontFamily: 'IBM Plex Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 4,
